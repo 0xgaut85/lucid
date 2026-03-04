@@ -11,20 +11,14 @@ import agentPoints from '@/lib/agent-points.json'
 const vertexShader = buildVertexShader()
 const fragmentShader = buildFragmentShader()
 
-const LABEL_STYLE: React.CSSProperties = {
-  fontFamily: 'var(--font-geist-sans)',
-  color: '#ffffff',
-  fontSize: '1.2rem',
-  textShadow: '0 0 15px rgba(255,255,255,0.2)',
-  letterSpacing: '0.3em',
-}
-
 interface ParticleOrbProps {
   labelPortal: HTMLDivElement | null
   onSignupOpen: () => void
+  isMobile: boolean
+  touchActiveRef: React.MutableRefObject<boolean>
 }
 
-export default function ParticleOrb({ labelPortal, onSignupOpen }: ParticleOrbProps) {
+export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touchActiveRef }: ParticleOrbProps) {
   const pointsRef = useRef<THREE.Points>(null)
   const materialRef = useRef<THREE.ShaderMaterial>(null)
 
@@ -145,31 +139,37 @@ export default function ParticleOrb({ labelPortal, onSignupOpen }: ParticleOrbPr
   const socialsProgress = useRef(0)
   const agentProgress = useRef(0)
 
+  const prevMobileRef = useRef<boolean | null>(null)
+  const mobilePhase = useRef<'idle' | 'split' | 'socials' | 'agent'>('idle')
+  const wasTouching = useRef(false)
+
+  const labelStyle = useMemo<React.CSSProperties>(() => ({
+    fontFamily: 'var(--font-geist-sans)',
+    color: '#ffffff',
+    fontSize: isMobile ? '0.85rem' : '1.2rem',
+    textShadow: '0 0 15px rgba(255,255,255,0.2)',
+    letterSpacing: isMobile ? '0.15em' : '0.3em',
+  }), [isMobile])
+
   useFrame((state) => {
     if (!materialRef.current) return
 
     materialRef.current.uniforms.uTime.value = state.clock.elapsedTime
     materialRef.current.uniforms.uCameraZ.value = state.camera.position.z
 
+    if (prevMobileRef.current !== isMobile) {
+      const pc = state.camera as THREE.PerspectiveCamera
+      pc.fov = isMobile ? 72 : 45
+      pc.updateProjectionMatrix()
+      prevMobileRef.current = isMobile
+    }
+
     state.camera.updateMatrixWorld()
     state.raycaster.setFromCamera(state.pointer, state.camera)
     state.raycaster.ray.intersectPlane(plane, targetVec)
 
     const distanceFromCenter = targetVec.length()
-    let newHovered = distanceFromCenter < sphereRadius * 1.5
 
-    if (hoverProgress.current > ANIMATION.hoverThreshold) {
-      const nearAnyOrb = orbCenters3D.some(c => targetVec.distanceTo(c) < LEVEL1.hoverRadius)
-      newHovered = newHovered || nearAnyOrb
-    }
-
-    if (newHovered !== isHovered.current) {
-      isHovered.current = newHovered
-    }
-
-    // Lerp + gradual push. Exponential lerp for the smooth middle, then a
-    // linearly ramping push so progress reaches exactly 0.0/1.0 in finite time.
-    // The ramp avoids the velocity discontinuity a hard threshold would create.
     const advance = (cur: number, target: number, rate: number) => {
       let v = cur + (target - cur) * rate
       if (target === 1.0 && v > 0.5) {
@@ -182,35 +182,86 @@ export default function ParticleOrb({ labelPortal, onSignupOpen }: ParticleOrbPr
       return v
     }
 
-    // Keep main hover active while a sub-animation is still returning —
-    // prevents the orbs from merging while the agent/socials zoom reverses
-    const subActive = socialsProgress.current > 0.02 || agentProgress.current > 0.02
-    const hoverTarget = (isHovered.current || subActive) ? 1.0 : 0.0
-    const hoverRate = hoverTarget === 1.0 ? ANIMATION.inRate : ANIMATION.outRate
-    hoverProgress.current = advance(hoverProgress.current, hoverTarget, hoverRate)
+    let hTarget: number
+    let sHovered: boolean
+    let aHoveredNow: boolean
+    let fwdHover: boolean
+    let fwdSocials: boolean
+    let fwdAgent: boolean
+
+    if (isMobile) {
+      const touching = touchActiveRef.current
+      if (wasTouching.current && !touching) {
+        const phase = mobilePhase.current
+        if (phase === 'idle') {
+          if (distanceFromCenter < sphereRadius * 1.5) {
+            mobilePhase.current = 'split'
+          }
+        } else if (phase === 'split') {
+          const dS = targetVec.distanceTo(orbCenters3D[1])
+          const dA = targetVec.distanceTo(orbCenters3D[0])
+          if (dS < LEVEL1.hoverRadius + 0.5) {
+            mobilePhase.current = 'socials'
+          } else if (dA < LEVEL1.hoverRadius + 0.5) {
+            mobilePhase.current = 'agent'
+          } else {
+            mobilePhase.current = 'idle'
+          }
+        } else {
+          mobilePhase.current = 'split'
+        }
+      }
+      wasTouching.current = touching
+
+      const p = mobilePhase.current
+      hTarget = p !== 'idle' ? 1.0 : 0.0
+      sHovered = p === 'socials' && hoverProgress.current > 0.9
+      aHoveredNow = p === 'agent' && hoverProgress.current > 0.9
+      fwdHover = p !== 'idle'
+      fwdSocials = p === 'socials'
+      fwdAgent = p === 'agent'
+    } else {
+      let newHovered = distanceFromCenter < sphereRadius * 1.5
+      if (hoverProgress.current > ANIMATION.hoverThreshold) {
+        const nearAnyOrb = orbCenters3D.some(c => targetVec.distanceTo(c) < LEVEL1.hoverRadius)
+        newHovered = newHovered || nearAnyOrb
+      }
+      isHovered.current = newHovered
+
+      const subActive = socialsProgress.current > 0.02 || agentProgress.current > 0.02
+      hTarget = (isHovered.current || subActive) ? 1.0 : 0.0
+
+      const distToSocials = targetVec.distanceTo(orbCenters3D[1])
+      sHovered = hoverProgress.current > ANIMATION.socialsActivation && distToSocials < LEVEL1.hoverRadius
+
+      const distToAgent = targetVec.distanceTo(orbCenters3D[0])
+      aHoveredNow = hoverProgress.current > ANIMATION.socialsActivation && distToAgent < LEVEL1.hoverRadius
+
+      fwdHover = isHovered.current
+      fwdSocials = sHovered
+      fwdAgent = aHoveredNow
+    }
+
+    const rm = isMobile ? 4 : 1
+
+    const hoverRate = (hTarget === 1.0 ? ANIMATION.inRate : ANIMATION.outRate) * rm
+    hoverProgress.current = advance(hoverProgress.current, hTarget, hoverRate)
     materialRef.current.uniforms.uHoverProgress.value = hoverProgress.current
 
-    // Socials
-    const distToSocials = targetVec.distanceTo(orbCenters3D[1])
-    const socialsHovered = hoverProgress.current > ANIMATION.socialsActivation && distToSocials < LEVEL1.hoverRadius
-    const socialsTarget = socialsHovered ? 1.0 : 0.0
-    const socialsRate = socialsHovered ? ANIMATION.inRate : ANIMATION.outRate
+    const socialsTarget = sHovered ? 1.0 : 0.0
+    const socialsRate = (sHovered ? ANIMATION.inRate : ANIMATION.outRate) * rm
     socialsProgress.current = advance(socialsProgress.current, socialsTarget, socialsRate)
     materialRef.current.uniforms.uSocialsProgress.value = socialsProgress.current
 
-    // Agent
-    const distToAgent = targetVec.distanceTo(orbCenters3D[0])
-    const agentHoveredNow = hoverProgress.current > ANIMATION.socialsActivation && distToAgent < LEVEL1.hoverRadius
-    const agentTarget = agentHoveredNow ? 1.0 : 0.0
-    const agentRate = agentHoveredNow ? ANIMATION.inRate : ANIMATION.outRate * 0.6
+    const agentTarget = aHoveredNow ? 1.0 : 0.0
+    const agentRate = (aHoveredNow ? ANIMATION.inRate : ANIMATION.outRate * 0.6) * rm
     agentProgress.current = advance(agentProgress.current, agentTarget, agentRate)
     materialRef.current.uniforms.uAgentProgress.value = agentProgress.current
 
-    // Forward flags — dispersion/noise only applies going forward, not on return
     materialRef.current.uniforms.uForwardFlags.value.set(
-      isHovered.current ? 1 : 0,
-      socialsHovered ? 1 : 0,
-      agentHoveredNow ? 1 : 0,
+      fwdHover ? 1 : 0,
+      fwdSocials ? 1 : 0,
+      fwdAgent ? 1 : 0,
     )
 
     // Camera — consistent smootherstep easing for both sub-zooms
@@ -279,7 +330,11 @@ export default function ParticleOrb({ labelPortal, onSignupOpen }: ParticleOrbPr
       agentGlowRef.current.style.opacity = (agentShow && agentBtnHovered.current) ? '1' : '0'
     }
 
-    materialRef.current.uniforms.uPointer.value.lerp(targetVec, CURSOR.lerpRate)
+    if (isMobile && !touchActiveRef.current) {
+      materialRef.current.uniforms.uPointer.value.set(999, 999, 999)
+    } else {
+      materialRef.current.uniforms.uPointer.value.lerp(targetVec, CURSOR.lerpRate)
+    }
   })
 
   const showLabels = !!portalRef
@@ -348,7 +403,7 @@ export default function ParticleOrb({ labelPortal, onSignupOpen }: ParticleOrbPr
             <div ref={mainTitleRef} style={{ opacity: 1 }}>
               <span
                 className="orb-label font-light select-none whitespace-nowrap lowercase"
-                style={LABEL_STYLE}
+                style={labelStyle}
               >
                 lucid
               </span>
@@ -374,7 +429,7 @@ export default function ParticleOrb({ labelPortal, onSignupOpen }: ParticleOrbPr
                 >
                   <span
                     className={`orb-label font-light select-none whitespace-nowrap lowercase${isRedacted ? ' glitch-text' : ''}`}
-                    style={LABEL_STYLE}
+                    style={labelStyle}
                     {...(isRedacted ? { 'data-text': node.label } : {})}
                   >
                     {node.label}
@@ -410,7 +465,7 @@ export default function ParticleOrb({ labelPortal, onSignupOpen }: ParticleOrbPr
                       rel="noopener noreferrer"
                       className="orb-label font-light select-none whitespace-nowrap lowercase"
                       style={{
-                        ...LABEL_STYLE,
+                        ...labelStyle,
                         textDecoration: 'none',
                         cursor: 'pointer',
                       }}
@@ -420,7 +475,7 @@ export default function ParticleOrb({ labelPortal, onSignupOpen }: ParticleOrbPr
                   ) : (
                     <span
                       className={`orb-label font-light select-none whitespace-nowrap lowercase${isRedacted ? ' glitch-text' : ''}`}
-                      style={LABEL_STYLE}
+                      style={labelStyle}
                       {...(isRedacted ? { 'data-text': node.label } : {})}
                     >
                       {node.label}
@@ -478,10 +533,10 @@ export default function ParticleOrb({ labelPortal, onSignupOpen }: ParticleOrbPr
                 <span
                   className="coming-soon-text block text-white font-light lowercase select-none whitespace-nowrap"
                   style={{
-                    fontSize: '1.2rem',
+                    fontSize: isMobile ? '0.85rem' : '1.2rem',
                     transition: 'text-shadow 0.4s ease, letter-spacing 0.4s ease',
                     textShadow: '0 0 15px rgba(255,255,255,0.2)',
-                    letterSpacing: '0.3em',
+                    letterSpacing: isMobile ? '0.15em' : '0.3em',
                   }}
                 >
                   coming soon

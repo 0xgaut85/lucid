@@ -45,15 +45,15 @@ export default function VisitorCounter() {
   if (display === null) return null
 
   return (
-    <div className="fixed top-6 left-6 sm:top-8 sm:left-10 z-30 select-none pointer-events-none">
+    <div className="fixed top-4 left-4 sm:top-8 sm:left-10 z-30 select-none pointer-events-none">
       <span
         className="font-light lowercase block"
         style={{
           fontFamily: 'var(--font-geist-sans)',
           color: '#ffffff',
-          fontSize: '1.2rem',
+          fontSize: 'clamp(0.7rem, 2.5vw, 1.2rem)',
           textShadow: '0 0 15px rgba(255,255,255,0.2)',
-          letterSpacing: '0.3em',
+          letterSpacing: '0.2em',
         }}
       >
         {display.toLocaleString()}

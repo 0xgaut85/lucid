@@ -19,6 +19,7 @@ body {
   margin: 0;
   padding: 0;
   overflow-x: hidden;
+  overscroll-behavior: none;
 }
 
 .noise-bg {
@@ -77,13 +78,15 @@ body {
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.orb-label:hover {
-  text-shadow: 0 0 25px rgba(255,255,255,0.5) !important;
-  letter-spacing: 0.35em !important;
-}
+@media (hover: hover) {
+  .orb-label:hover {
+    text-shadow: 0 0 25px rgba(255,255,255,0.5) !important;
+    letter-spacing: 0.35em !important;
+  }
 
-.orb-label:hover::after {
-  width: 100%;
+  .orb-label:hover::after {
+    width: 100%;
+  }
 }
 
 /* Horizontal glitch effect for [redacted] text */
@@ -134,11 +137,13 @@ body {
   93% { transform: translateX(0); opacity: 0; }
 }
 
-.coming-soon-btn:hover .coming-soon-text {
-  text-shadow: 0 0 25px rgba(255,255,255,0.5) !important;
-  letter-spacing: 0.35em !important;
-}
+@media (hover: hover) {
+  .coming-soon-btn:hover .coming-soon-text {
+    text-shadow: 0 0 25px rgba(255,255,255,0.5) !important;
+    letter-spacing: 0.35em !important;
+  }
 
-.coming-soon-btn:hover .coming-soon-underline {
-  width: 100% !important;
+  .coming-soon-btn:hover .coming-soon-underline {
+    width: 100% !important;
+  }
 }

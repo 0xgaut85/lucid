@@ -7,13 +7,23 @@ import BetaSignup from '@/components/BetaSignup'
 import VisitorCounter from '@/components/VisitorCounter'
 import Image from 'next/image'
 import Link from 'next/link'
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 
 export default function Home() {
   const [signupOpen, setSignupOpen] = useState(false)
   const [portalEl, setPortalEl] = useState<HTMLDivElement | null>(null)
   const portalRef = useCallback((node: HTMLDivElement | null) => {
     setPortalEl(node)
+  }, [])
+
+  const [isMobile, setIsMobile] = useState(false)
+  const touchActiveRef = useRef(false)
+
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
   }, [])
 
   return (
@@ -39,7 +49,7 @@ export default function Home() {
         </defs>
       </svg>
       <div className="noise-bg" />
-      <div className="w-full h-screen relative">
+      <div className="w-full relative" style={{ height: '100dvh' }}>
         <div
           className="absolute inset-0 z-0"
           style={{
@@ -54,12 +64,19 @@ export default function Home() {
           }}
         />
 
-        <div className="absolute inset-0 z-[1]">
-          <Canvas camera={{ position: [0, 0, 15], fov: 45 }}>
+        <div
+          className="absolute inset-0 z-[1]"
+          style={{ touchAction: 'none' }}
+          onTouchStart={() => { touchActiveRef.current = true }}
+          onTouchEnd={() => { touchActiveRef.current = false }}
+        >
+          <Canvas camera={{ position: [0, 0, 15], fov: 45 }} dpr={[1, 2]}>
             <color attach="background" args={['#000000']} />
             <ParticleOrb
               labelPortal={portalEl}
               onSignupOpen={() => setSignupOpen(true)}
+              isMobile={isMobile}
+              touchActiveRef={touchActiveRef}
             />
             <EffectComposer>
               <Bloom
