@@ -19,7 +19,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: "get Lucid",
-  description: "A minimalist tech landing page with an interactive 3D orb",
+  description: "An intelligence layer grounding autonomous agents in verified, real-time knowledge at scale.",
 };
 
 export default function RootLayout({
