@@ -232,10 +232,14 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
       hTarget = (isHovered.current || subActive) ? 1.0 : 0.0
 
       const distToSocials = targetVec.distanceTo(orbCenters3D[1])
-      sHovered = hoverProgress.current > ANIMATION.socialsActivation && distToSocials < LEVEL1.hoverRadius
+      sHovered = hoverProgress.current > ANIMATION.socialsActivation
+        && distToSocials < LEVEL1.hoverRadius
+        && agentProgress.current < 0.02
 
       const distToAgent = targetVec.distanceTo(orbCenters3D[0])
-      aHoveredNow = hoverProgress.current > ANIMATION.socialsActivation && distToAgent < LEVEL1.hoverRadius
+      aHoveredNow = hoverProgress.current > ANIMATION.socialsActivation
+        && distToAgent < LEVEL1.hoverRadius
+        && socialsProgress.current < 0.02
 
       fwdHover = isHovered.current
       fwdSocials = sHovered
