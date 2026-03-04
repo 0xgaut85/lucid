@@ -106,6 +106,8 @@ body {
   pointer-events: none;
   color: #fff;
   opacity: 0.7;
+  background: transparent;
+  margin: 0;
 }
 
 .glitch-text::before {

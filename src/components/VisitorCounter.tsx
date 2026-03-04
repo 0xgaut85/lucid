@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-const COUNTER_API = 'https://api.counterapi.dev/v1/getlucid-site/visits/up'
+const COUNTER_UP = 'https://api.counterapi.dev/v1/getlucid-site/visits/up'
 
 export default function VisitorCounter() {
   const [display, setDisplay] = useState<number | null>(null)
@@ -12,26 +12,29 @@ export default function VisitorCounter() {
     let cancelled = false
 
     async function track() {
-      let target: number
-      try {
-        const res = await fetch(COUNTER_API)
-        const data = await res.json()
-        target = data.count ?? 1
-      } catch {
-        const prev = parseInt(localStorage.getItem('lucid_vc') || '0', 10)
-        target = prev + 1
-        localStorage.setItem('lucid_vc', String(target))
+      let target: number | null = null
+      const cached = sessionStorage.getItem('lucid_vc')
+
+      if (cached) {
+        target = parseInt(cached, 10)
+      } else {
+        try {
+          const res = await fetch(COUNTER_UP)
+          const data = await res.json()
+          target = data.count ?? null
+          if (target !== null) sessionStorage.setItem('lucid_vc', String(target))
+        } catch { /* silent */ }
       }
 
-      if (cancelled) return
+      if (cancelled || target === null) return
 
       let current = Math.max(0, target - 25)
       setDisplay(current)
       animRef.current = setInterval(() => {
-        const step = Math.max(1, Math.ceil((target - current) * 0.12))
-        current = Math.min(target, current + step)
+        const step = Math.max(1, Math.ceil((target! - current) * 0.12))
+        current = Math.min(target!, current + step)
         setDisplay(current)
-        if (current >= target && animRef.current) clearInterval(animRef.current)
+        if (current >= target! && animRef.current) clearInterval(animRef.current)
       }, 35)
     }
 

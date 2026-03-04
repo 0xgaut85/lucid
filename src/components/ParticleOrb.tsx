@@ -173,10 +173,10 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
     const advance = (cur: number, target: number, rate: number) => {
       let v = cur + (target - cur) * rate
       if (target === 1.0 && v > 0.5) {
-        v = Math.min(1.0, v + (v - 0.5) * 0.008)
+        v = Math.min(1.0, v + (v - 0.5) * 0.01)
       }
       if (target === 0.0 && v < 0.5) {
-        v = Math.max(0.0, v - (0.5 - v) * 0.008)
+        v = Math.max(0.0, v - (0.5 - v) * 0.01)
       }
       if (Math.abs(v - target) < 0.002) v = target
       return v

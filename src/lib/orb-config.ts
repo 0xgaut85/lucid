@@ -63,8 +63,8 @@ export const CURSOR = {
 } as const
 
 export const ANIMATION = {
-  inRate: 0.0015,
-  outRate: 0.0035,
+  inRate: 0.001875,
+  outRate: 0.004375,
   dispersion: 1.8,
   linkDispersion: 0.3,
   hoverThreshold: 0.3,
