@@ -58,18 +58,6 @@ export default function VisitorCounter() {
       >
         {display.toLocaleString()}
       </span>
-      <span
-        className="font-light lowercase block"
-        style={{
-          fontFamily: 'var(--font-geist-sans)',
-          color: 'rgba(255,255,255,0.4)',
-          fontSize: '0.6rem',
-          letterSpacing: '0.2em',
-          marginTop: '2px',
-        }}
-      >
-        visitors
-      </span>
     </div>
   )
 }

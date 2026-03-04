@@ -356,33 +356,38 @@ export default function ParticleOrb({ labelPortal, onSignupOpen }: ParticleOrbPr
           </Html>
 
           {/* Main split labels (lucid agent, socials, [redacted]) */}
-          {LEVEL1.nodes.map((node, i) => (
-            <Html
-              key={node.id}
-              position={[node.center[0], node.center[1] + node.radius + 0.4, node.center[2]]}
-              center
-              portal={portalRef}
-            >
-              <div
-                ref={el => { mainLabelRefs.current[i] = el }}
-                style={{
-                  opacity: 0,
-                  transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
-                }}
+          {LEVEL1.nodes.map((node, i) => {
+            const isRedacted = node.label === '[redacted]'
+            return (
+              <Html
+                key={node.id}
+                position={[node.center[0], node.center[1] + node.radius + 0.4, node.center[2]]}
+                center
+                portal={portalRef}
               >
-                <span
-                  className="orb-label font-light select-none whitespace-nowrap lowercase"
-                  style={LABEL_STYLE}
+                <div
+                  ref={el => { mainLabelRefs.current[i] = el }}
+                  style={{
+                    opacity: 0,
+                    transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
+                  }}
                 >
-                  {node.label}
-                </span>
-              </div>
-            </Html>
-          ))}
+                  <span
+                    className={`orb-label font-light select-none whitespace-nowrap lowercase${isRedacted ? ' glitch-text' : ''}`}
+                    style={LABEL_STYLE}
+                    {...(isRedacted ? { 'data-text': node.label } : {})}
+                  >
+                    {node.label}
+                  </span>
+                </div>
+              </Html>
+            )
+          })}
 
-          {/* Sub socials labels (x, [redacted], [redacted]) */}
+          {/* Sub socials labels (@getlucid, [redacted], [redacted]) */}
           {LEVEL2_SOCIALS.nodes.map((node, i) => {
             const href = subLabelLinks[node.id]
+            const isRedacted = node.label === '[redacted]'
             return (
               <Html
                 key={`sub-${node.id}`}
@@ -414,8 +419,9 @@ export default function ParticleOrb({ labelPortal, onSignupOpen }: ParticleOrbPr
                     </a>
                   ) : (
                     <span
-                      className="orb-label font-light select-none whitespace-nowrap lowercase"
+                      className={`orb-label font-light select-none whitespace-nowrap lowercase${isRedacted ? ' glitch-text' : ''}`}
                       style={LABEL_STYLE}
+                      {...(isRedacted ? { 'data-text': node.label } : {})}
                     >
                       {node.label}
                     </span>

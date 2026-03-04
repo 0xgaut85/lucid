@@ -20,9 +20,6 @@ const spaceGrotesk = Space_Grotesk({
 export const metadata: Metadata = {
   title: "get Lucid",
   description: "A minimalist tech landing page with an interactive 3D orb",
-  icons: {
-    icon: "/favicon.png",
-  },
 };
 
 export default function RootLayout({

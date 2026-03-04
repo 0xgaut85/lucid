@@ -209,9 +209,10 @@ void main() {
   }
   
   // Agent split — morph into humanoid figure
+  // All agent effects use the same curve so morph/fade/shrink stay in sync
+  float agentCurve = smoothstep(0.0, 1.0, uAgentProgress);
   if (isAgent > 0.5 && uAgentProgress > 0.001) {
-    float morphInput = smoothstep(0.15, 0.85, uAgentProgress);
-    float easedA = smootherstep(morphInput);
+    float easedA = smootherstep(uAgentProgress);
     float aProgress = splitProgress(easedA, aRandom);
     
     vec3 transitionNoise = vec3(
@@ -221,7 +222,6 @@ void main() {
     ) * 0.08 * sin(aProgress * 3.14159) * uForwardFlags.z;
     
     vec3 finalPos = aAgentTarget;
-    // Very subtle breathing — keeps the figure almost still
     finalPos.y += sin(uTime * 1.2 + originalPosition.x) * 0.025 * aProgress;
     finalPos.x += cos(uTime * 0.8 + originalPosition.y) * 0.015 * aProgress;
     
@@ -238,14 +238,12 @@ void main() {
     overallFade -= uSocialsProgress * (1.0 - isSocials);
   }
   if (uAgentProgress > 0.001) {
-    float fadeCurve = smoothstep(0.0, 0.4, uAgentProgress);
-    overallFade -= fadeCurve * (1.0 - isAgent);
+    overallFade -= agentCurve * (1.0 - isAgent);
   }
   vGroupFade = clamp(overallFade, 0.0, 1.0);
 
-  // Cursor interaction (scales with camera distance)
-  // Dampen cursor push during agent morph so the figure isn't disrupted
-  float agentDampen = 1.0 - isAgent * smoothstep(0.0, 1.0, uAgentProgress) * 0.85;
+  // Cursor interaction — dampen during agent morph so figure isn't disrupted
+  float agentDampen = 1.0 - isAgent * agentCurve * 0.85;
   vec3 preCursorPos = pos;
   float cGlow;
   cursorInteract(pos, uPointer, uCameraZ, cGlow);
@@ -253,8 +251,7 @@ void main() {
   vCursorGlow = cGlow * agentDampen;
   vDistance = distance(uPointer, pos);
 
-  // Reduce idle motion during agent morph for a sharper figure
-  float idleScale = 1.0 - isAgent * smoothstep(0.2, 0.8, uAgentProgress) * 0.8;
+  float idleScale = 1.0 - isAgent * agentCurve * 0.8;
   pos += idleMotion(originalPosition, aRandom, uTime) * idleScale;
 
   vec4 mvPosition = modelViewMatrix * vec4(pos, 1.0);
@@ -263,8 +260,7 @@ void main() {
   sizeBoost += vCursorGlow * 0.2;
 
   float linkShrink = mix(1.0, ${LEVEL2_SOCIALS.linkConfig.sizeFactor.toFixed(1)}, vIsLink * smoothstep(0.0, 1.0, uSocialsProgress));
-  // Shrink particles during agent morph for finer detail
-  float agentShrink = mix(1.0, 0.45, isAgent * smoothstep(0.0, 1.0, uAgentProgress));
+  float agentShrink = mix(1.0, 0.45, isAgent * agentCurve);
   gl_PointSize = (baseSize * sizeBoost * linkShrink * agentShrink / -mvPosition.z);
   gl_Position = projectionMatrix * mvPosition;
 }
