@@ -89,7 +89,7 @@ body {
   }
 }
 
-/* Horizontal glitch effect for [redacted] text */
+/* Constant horizontal glitch effect for [redacted] text */
 .glitch-text {
   position: relative;
   display: inline-block;
@@ -105,36 +105,36 @@ body {
   height: 100%;
   pointer-events: none;
   color: #fff;
+  opacity: 0.7;
 }
 
 .glitch-text::before {
-  animation: glitch-top 4s infinite linear;
-  clip-path: inset(0 0 55% 0);
-  text-shadow: -2px 0 rgba(255,255,255,0.6);
+  animation: glitch-top 0.9s infinite steps(5);
+  clip-path: inset(0 0 50% 0);
+  text-shadow: -1px 0 rgba(255,255,255,0.5);
 }
 
 .glitch-text::after {
-  animation: glitch-bottom 3.5s infinite linear;
-  clip-path: inset(45% 0 0 0);
-  text-shadow: 2px 0 rgba(255,255,255,0.6);
+  animation: glitch-bottom 0.7s infinite steps(4);
+  clip-path: inset(50% 0 0 0);
+  text-shadow: 1px 0 rgba(255,255,255,0.5);
 }
 
 @keyframes glitch-top {
-  0%, 92%, 100% { transform: translateX(0); opacity: 0; }
-  93% { transform: translateX(-4px) skewX(-2deg); opacity: 0.8; }
-  94% { transform: translateX(3px) skewX(1deg); opacity: 0.6; }
-  95% { transform: translateX(-2px); opacity: 0.9; }
-  96% { transform: translateX(5px) skewX(-1deg); opacity: 0.7; }
-  97% { transform: translateX(0); opacity: 0; }
+  0%   { transform: translateX(0); }
+  20%  { transform: translateX(-2px); }
+  40%  { transform: translateX(1px); }
+  60%  { transform: translateX(-1px); }
+  80%  { transform: translateX(2px); }
+  100% { transform: translateX(0); }
 }
 
 @keyframes glitch-bottom {
-  0%, 88%, 100% { transform: translateX(0); opacity: 0; }
-  89% { transform: translateX(3px) skewX(1deg); opacity: 0.7; }
-  90% { transform: translateX(-5px) skewX(-2deg); opacity: 0.9; }
-  91% { transform: translateX(2px); opacity: 0.6; }
-  92% { transform: translateX(-3px) skewX(1deg); opacity: 0.8; }
-  93% { transform: translateX(0); opacity: 0; }
+  0%   { transform: translateX(0); }
+  25%  { transform: translateX(2px); }
+  50%  { transform: translateX(-1px); }
+  75%  { transform: translateX(1px); }
+  100% { transform: translateX(0); }
 }
 
 @media (hover: hover) {
