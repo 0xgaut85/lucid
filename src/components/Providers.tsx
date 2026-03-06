@@ -1,16 +1,15 @@
 'use client'
 
 import { PrivyProvider } from '@privy-io/react-auth'
-import { toSolanaWalletConnectors } from '@privy-io/react-auth/solana'
-
-const solanaConnectors = toSolanaWalletConnectors({
-  shouldAutoConnect: true,
-})
 
 export default function Providers({ children }: { children: React.ReactNode }) {
+  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID
+
+  if (!appId) return <>{children}</>
+
   return (
     <PrivyProvider
-      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID || ''}
+      appId={appId}
       config={{
         loginMethods: ['google', 'email', 'wallet'],
         appearance: {
@@ -22,11 +21,6 @@ export default function Providers({ children }: { children: React.ReactNode }) {
         embeddedWallets: {
           ethereum: {
             createOnLogin: 'users-without-wallets',
-          },
-        },
-        externalWallets: {
-          solana: {
-            connectors: solanaConnectors,
           },
         },
       }}

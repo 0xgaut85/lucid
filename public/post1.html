@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Post 1</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/geist@1/dist/fonts/geist-sans/style.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .post-container {
+      position: relative;
+      display: inline-block;
+      line-height: 0;
+    }
+
+    .post-container img.post-image {
+      display: block;
+      width: 1920px;
+      height: 1080px;
+      object-fit: cover;
+    }
+
+    .brand-mark {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .brand-mark img.logo {
+      width: 140px;
+      height: 140px;
+      object-fit: contain;
+      opacity: 0.6;
+    }
+
+    .brand-mark span {
+      font-family: 'Geist Sans', sans-serif;
+      font-weight: 300;
+      font-size: 90px;
+      color: rgba(255, 255, 255, 0.4);
+      letter-spacing: 0.05em;
+      text-transform: lowercase;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+  <div class="post-container">
+    <img class="post-image" src="post1.jpeg" alt="Post 1">
+    <div class="brand-mark">
+      <img class="logo" src="logo.png" alt="Lucid logo">
+      <span>lucid</span>
+    </div>
+  </div>
+</body>
+</html>
