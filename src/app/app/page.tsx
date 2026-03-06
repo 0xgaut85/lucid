@@ -1,7 +1,8 @@
 'use client'
 
-import { usePrivy } from '@privy-io/react-auth'
+import { usePrivy, useWallets } from '@privy-io/react-auth'
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { encodeFunctionData, parseAbi } from 'viem'
 import Image from 'next/image'
 import Link from 'next/link'
 
@@ -489,6 +490,13 @@ export default function AppPage() {
   )
 }
 
+const USDC_BASE_CONTRACT = '0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913'
+const USDC_ABI = parseAbi(['function transfer(address to, uint256 amount) returns (bool)'])
+const USDC_MINT_SOL = 'EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v'
+const TOKEN_PROGRAM_ID_STR = 'TokenkegQEqfCFJ6YqXpe44SZpn2zQkJYqjC7SZqiVcM'
+const ATA_PROGRAM_ID_STR = 'ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL'
+const SOLANA_RPC = 'https://api.mainnet-beta.solana.com'
+
 function PaymentModal({
   getAccessToken,
   onSuccess,
@@ -498,19 +506,20 @@ function PaymentModal({
   onSuccess: () => void
   onClose: () => void
 }) {
-  const [chain, setChain] = useState<'solana' | 'base'>('solana')
-  const [txHash, setTxHash] = useState('')
-  const [step, setStep] = useState<'send' | 'verify' | 'success'>('send')
-  const [submitting, setSubmitting] = useState(false)
-  const [polling, setPolling] = useState(false)
+  const { wallets } = useWallets()
+  const [chain, setChain] = useState<'solana' | 'base'>('base')
+  const [status, setStatus] = useState<'idle' | 'sending' | 'verifying' | 'success' | 'error'>('idle')
   const [error, setError] = useState('')
-  const [addressCopied, setAddressCopied] = useState(false)
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
-  const USDC_ADDRESSES = {
-    solana: process.env.NEXT_PUBLIC_USDC_RECEIVE_ADDRESS_SOL || 'configure in env',
-    base: process.env.NEXT_PUBLIC_USDC_RECEIVE_ADDRESS_BASE || 'configure in env',
-  }
+  const USDC_RECEIVE_BASE = process.env.NEXT_PUBLIC_USDC_RECEIVE_ADDRESS_BASE || ''
+  const USDC_RECEIVE_SOL = process.env.NEXT_PUBLIC_USDC_RECEIVE_ADDRESS_SOL || ''
+
+  const evmWallet = wallets.find(w => w.walletClientType !== 'privy') || wallets[0]
+
+  const hasSolanaWallet = typeof window !== 'undefined' && !!(
+    (window as unknown as Record<string, unknown>).phantom as Record<string, unknown> | undefined
+  )?.solana
 
   useEffect(() => {
     return () => {
@@ -518,65 +527,189 @@ function PaymentModal({
     }
   }, [])
 
-  const copyAddress = () => {
-    navigator.clipboard.writeText(USDC_ADDRESSES[chain])
-    setAddressCopied(true)
-    setTimeout(() => setAddressCopied(false), 2000)
-  }
+  const verifyAndActivate = useCallback(async (txHash: string, payChain: string) => {
+    setStatus('verifying')
+    const token = await getAccessToken()
 
-  const pollSubscriptionStatus = useCallback(async () => {
-    try {
-      const token = await getAccessToken()
-      if (!token) return
-      const res = await fetch('/api/subscribe/status', {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      if (res.ok) {
-        const data = await res.json()
-        const sub = data.subscription
-        if (sub?.status === 'active' && sub?.expiresAt && new Date(sub.expiresAt) > new Date()) {
+    const verify = async () => {
+      try {
+        const res = await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: {
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ txHash, chain: payChain }),
+        })
+        if (res.ok) {
           if (pollingRef.current) clearInterval(pollingRef.current)
-          setPolling(false)
-          setStep('success')
+          setStatus('success')
           setTimeout(onSuccess, 1500)
+          return true
         }
-      }
-    } catch {
-      // keep polling
+      } catch { /* retry */ }
+      return false
+    }
+
+    const ok = await verify()
+    if (!ok) {
+      pollingRef.current = setInterval(async () => {
+        try {
+          const statusToken = await getAccessToken()
+          const res = await fetch('/api/subscribe/status', {
+            headers: { Authorization: `Bearer ${statusToken}` },
+          })
+          if (res.ok) {
+            const data = await res.json()
+            const sub = data.subscription
+            if (sub?.status === 'active' && sub?.expiresAt && new Date(sub.expiresAt) > new Date()) {
+              if (pollingRef.current) clearInterval(pollingRef.current)
+              setStatus('success')
+              setTimeout(onSuccess, 1500)
+            }
+          }
+        } catch { /* keep polling */ }
+      }, 5000)
     }
   }, [getAccessToken, onSuccess])
 
-  const submit = async () => {
-    if (!txHash.trim()) {
-      setError('enter a transaction hash')
+  const payWithBase = async () => {
+    if (!evmWallet) {
+      setError('no ethereum wallet connected')
       return
     }
-    setSubmitting(true)
+    setStatus('sending')
     setError('')
     try {
-      const token = await getAccessToken()
-      const res = await fetch('/api/subscribe', {
-        method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ txHash: txHash.trim(), chain }),
-      })
-      if (res.ok) {
-        setStep('success')
-        setTimeout(onSuccess, 1500)
-      } else {
-        const data = await res.json()
-        setError(data.error || 'verification failed, retrying...')
-        setPolling(true)
-        pollingRef.current = setInterval(pollSubscriptionStatus, 5000)
+      const provider = await evmWallet.getEthereumProvider()
+      try {
+        await provider.request({ method: 'wallet_switchEthereumChain', params: [{ chainId: '0x2105' }] })
+      } catch (switchErr: unknown) {
+        if ((switchErr as { code?: number })?.code === 4902) {
+          await provider.request({
+            method: 'wallet_addEthereumChain',
+            params: [{
+              chainId: '0x2105',
+              chainName: 'Base',
+              nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
+              rpcUrls: ['https://mainnet.base.org'],
+              blockExplorerUrls: ['https://basescan.org'],
+            }],
+          })
+        } else {
+          throw switchErr
+        }
       }
-    } catch {
-      setError('network error')
-    } finally {
-      setSubmitting(false)
+
+      const data = encodeFunctionData({
+        abi: USDC_ABI,
+        functionName: 'transfer',
+        args: [USDC_RECEIVE_BASE as `0x${string}`, BigInt(20_000_000)],
+      })
+
+      const txHash = await provider.request({
+        method: 'eth_sendTransaction',
+        params: [{
+          from: evmWallet.address,
+          to: USDC_BASE_CONTRACT,
+          data,
+        }],
+      })
+
+      await verifyAndActivate(txHash as string, 'base')
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message || 'transaction failed'
+      if (msg.includes('rejected') || msg.includes('denied') || msg.includes('cancel')) {
+        setError('transaction cancelled')
+      } else {
+        setError(msg.length > 80 ? msg.slice(0, 80) + '...' : msg)
+      }
+      setStatus('error')
     }
+  }
+
+  const payWithSolana = async () => {
+    setStatus('sending')
+    setError('')
+    try {
+      const phantom = ((window as unknown as Record<string, unknown>).phantom as Record<string, unknown> | undefined)?.solana as {
+        isConnected: boolean
+        connect: () => Promise<{ publicKey: { toString: () => string } }>
+        signAndSendTransaction: (tx: unknown) => Promise<{ signature: string }>
+        publicKey: { toString: () => string } | null
+      } | undefined
+
+      if (!phantom) {
+        setError('install Phantom wallet to pay with Solana')
+        setStatus('error')
+        return
+      }
+
+      if (!phantom.isConnected) {
+        await phantom.connect()
+      }
+
+      const senderAddress = phantom.publicKey?.toString()
+      if (!senderAddress) {
+        setError('could not get wallet address')
+        setStatus('error')
+        return
+      }
+
+      const { Connection, PublicKey, Transaction, TransactionInstruction } = await import('@solana/web3.js')
+
+      const connection = new Connection(SOLANA_RPC, 'confirmed')
+      const senderPk = new PublicKey(senderAddress)
+      const receiverPk = new PublicKey(USDC_RECEIVE_SOL)
+      const mintPk = new PublicKey(USDC_MINT_SOL)
+      const tokenProgramId = new PublicKey(TOKEN_PROGRAM_ID_STR)
+      const ataProgramId = new PublicKey(ATA_PROGRAM_ID_STR)
+
+      const [senderAta] = PublicKey.findProgramAddressSync(
+        [senderPk.toBuffer(), tokenProgramId.toBuffer(), mintPk.toBuffer()],
+        ataProgramId
+      )
+      const [receiverAta] = PublicKey.findProgramAddressSync(
+        [receiverPk.toBuffer(), tokenProgramId.toBuffer(), mintPk.toBuffer()],
+        ataProgramId
+      )
+
+      const amountBuffer = Buffer.alloc(9)
+      amountBuffer.writeUInt8(3, 0)
+      amountBuffer.writeBigUInt64LE(BigInt(20_000_000), 1)
+
+      const transferIx = new TransactionInstruction({
+        programId: tokenProgramId,
+        keys: [
+          { pubkey: senderAta, isSigner: false, isWritable: true },
+          { pubkey: receiverAta, isSigner: false, isWritable: true },
+          { pubkey: senderPk, isSigner: true, isWritable: false },
+        ],
+        data: amountBuffer,
+      })
+
+      const { blockhash } = await connection.getLatestBlockhash()
+      const tx = new Transaction({
+        recentBlockhash: blockhash,
+        feePayer: senderPk,
+      }).add(transferIx)
+
+      const { signature } = await phantom.signAndSendTransaction(tx)
+      await verifyAndActivate(signature, 'solana')
+    } catch (err: unknown) {
+      const msg = (err as { message?: string })?.message || 'transaction failed'
+      if (msg.includes('rejected') || msg.includes('denied') || msg.includes('cancel')) {
+        setError('transaction cancelled')
+      } else {
+        setError(msg.length > 80 ? msg.slice(0, 80) + '...' : msg)
+      }
+      setStatus('error')
+    }
+  }
+
+  const handlePay = () => {
+    if (chain === 'base') payWithBase()
+    else payWithSolana()
   }
 
   return (
@@ -602,7 +735,7 @@ function PaymentModal({
 
         {/* Modal body */}
         <div className="px-6 py-6">
-          {step === 'success' ? (
+          {status === 'success' ? (
             <div className="text-center py-8">
               <div className="w-8 h-8 rounded-full border border-green-400/40 flex items-center justify-center mx-auto mb-4">
                 <span className="text-green-400 text-sm">&#10003;</span>
@@ -611,136 +744,102 @@ function PaymentModal({
                 subscription activated
               </p>
             </div>
+          ) : status === 'sending' ? (
+            <div className="text-center py-10 space-y-4">
+              <div className="w-6 h-6 border border-white/20 border-t-white/60 rounded-full animate-spin mx-auto" />
+              <p className="text-white/50 text-xs" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                approve the transaction in your wallet...
+              </p>
+            </div>
+          ) : status === 'verifying' ? (
+            <div className="text-center py-10 space-y-4">
+              <div className="w-6 h-6 border border-white/20 border-t-white/60 rounded-full animate-spin mx-auto" />
+              <p className="text-white/50 text-xs" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                verifying on-chain...
+              </p>
+              <p className="text-white/30 text-[10px]" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                this may take a few seconds
+              </p>
+            </div>
           ) : (
             <div className="space-y-6">
-              {/* Step indicator */}
-              <div className="flex items-center gap-3 mb-2">
-                <div className={`flex items-center gap-2 ${step === 'send' ? 'text-white/80' : 'text-white/30'}`}>
-                  <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] ${step === 'send' ? 'border-white/40' : 'border-white/15'}`}>1</span>
-                  <span className="text-xs tracking-wider" style={{ fontFamily: 'var(--font-geist-sans)' }}>send</span>
-                </div>
-                <div className="flex-1 h-px bg-white/10" />
-                <div className={`flex items-center gap-2 ${step === 'verify' ? 'text-white/80' : 'text-white/30'}`}>
-                  <span className={`w-5 h-5 rounded-full border flex items-center justify-center text-[10px] ${step === 'verify' ? 'border-white/40' : 'border-white/15'}`}>2</span>
-                  <span className="text-xs tracking-wider" style={{ fontFamily: 'var(--font-geist-sans)' }}>verify</span>
+              {/* Chain selector */}
+              <div>
+                <p className="text-white/40 text-xs mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>select chain</p>
+                <div className="flex gap-2">
+                  {(['base', 'solana'] as const).map(c => (
+                    <button
+                      key={c}
+                      onClick={() => { setChain(c); setError('') }}
+                      className={`flex-1 px-4 py-2.5 text-xs tracking-wider lowercase transition-all cursor-pointer border ${
+                        chain === c
+                          ? 'border-white/40 text-white/80 bg-white/5'
+                          : 'border-white/10 text-white/30 hover:border-white/20'
+                      }`}
+                      style={{ fontFamily: 'var(--font-geist-sans)' }}
+                    >
+                      {c}
+                    </button>
+                  ))}
                 </div>
               </div>
 
-              {step === 'send' && (
-                <>
-                  {/* Chain selector */}
-                  <div>
-                    <p className="text-white/40 text-xs mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>select chain</p>
-                    <div className="flex gap-2">
-                      {(['solana', 'base'] as const).map(c => (
-                        <button
-                          key={c}
-                          onClick={() => setChain(c)}
-                          className={`flex-1 px-4 py-2.5 text-xs tracking-wider lowercase transition-all cursor-pointer border ${
-                            chain === c
-                              ? 'border-white/40 text-white/80 bg-white/5'
-                              : 'border-white/10 text-white/30 hover:border-white/20'
-                          }`}
-                          style={{ fontFamily: 'var(--font-geist-sans)' }}
-                        >
-                          {c}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
+              {/* Amount */}
+              <div className="border border-white/10 p-4 text-center">
+                <p className="text-white/40 text-xs mb-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>amount</p>
+                <p className="text-white/90 text-lg font-light" style={{ fontFamily: 'var(--font-geist-mono)' }}>20 USDC</p>
+                <p className="text-white/30 text-[10px] mt-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>30 days access</p>
+              </div>
 
-                  {/* Amount */}
-                  <div className="border border-white/10 p-4 text-center">
-                    <p className="text-white/40 text-xs mb-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>amount</p>
-                    <p className="text-white/90 text-lg font-light" style={{ fontFamily: 'var(--font-geist-mono)' }}>20 USDC</p>
-                  </div>
-
-                  {/* Address */}
-                  <div>
-                    <p className="text-white/40 text-xs mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>send to</p>
-                    <div className="flex items-center gap-2 bg-white/5 border border-white/10 px-3 py-2.5">
-                      <p
-                        className="text-white/70 text-xs break-all flex-1 select-all"
-                        style={{ fontFamily: 'var(--font-geist-mono)' }}
-                      >
-                        {USDC_ADDRESSES[chain]}
+              {/* Wallet info */}
+              <div className="bg-white/[0.03] border border-white/10 px-4 py-3">
+                {chain === 'base' ? (
+                  evmWallet ? (
+                    <div className="flex items-center justify-between">
+                      <p className="text-white/40 text-xs" style={{ fontFamily: 'var(--font-geist-sans)' }}>wallet</p>
+                      <p className="text-white/60 text-xs" style={{ fontFamily: 'var(--font-geist-mono)' }}>
+                        {evmWallet.address.slice(0, 6)}...{evmWallet.address.slice(-4)}
                       </p>
-                      <button
-                        onClick={copyAddress}
-                        className="text-white/30 hover:text-white/60 transition-colors text-xs cursor-pointer shrink-0 px-2"
-                        style={{ fontFamily: 'var(--font-geist-sans)' }}
-                      >
-                        {addressCopied ? 'copied' : 'copy'}
-                      </button>
                     </div>
-                  </div>
-
-                  <button
-                    onClick={() => setStep('verify')}
-                    className="w-full border border-white/20 hover:border-white/50 transition-all py-3 text-white/70 text-xs tracking-[0.2em] lowercase cursor-pointer"
-                    style={{ fontFamily: 'var(--font-geist-sans)' }}
-                  >
-                    i&apos;ve sent the funds
-                  </button>
-                </>
-              )}
-
-              {step === 'verify' && (
-                <>
-                  <div>
-                    <p className="text-white/50 text-sm mb-4" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                      paste your transaction hash to verify payment on-chain.
+                  ) : (
+                    <p className="text-white/40 text-xs text-center" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                      no wallet connected
                     </p>
-                    <input
-                      type="text"
-                      placeholder="transaction hash..."
-                      value={txHash}
-                      onChange={e => { setTxHash(e.target.value); setError('') }}
-                      className="w-full bg-transparent border border-white/10 px-3 py-2.5 text-white/80 text-xs tracking-wider outline-none focus:border-white/30 transition-colors placeholder:text-white/20"
-                      style={{ fontFamily: 'var(--font-geist-mono)' }}
-                      onKeyDown={e => e.key === 'Enter' && submit()}
-                    />
-                  </div>
-
-                  {error && (
-                    <div className="flex items-center gap-2">
-                      {polling && (
-                        <div className="w-3 h-3 border border-white/20 border-t-white/60 rounded-full animate-spin shrink-0" />
-                      )}
-                      <p className="text-red-400/70 text-xs" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                        {error}
+                  )
+                ) : (
+                  hasSolanaWallet ? (
+                    <div className="flex items-center justify-between">
+                      <p className="text-white/40 text-xs" style={{ fontFamily: 'var(--font-geist-sans)' }}>wallet</p>
+                      <p className="text-white/60 text-xs" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                        phantom detected
                       </p>
                     </div>
-                  )}
+                  ) : (
+                    <p className="text-white/40 text-xs text-center" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                      install{' '}
+                      <a href="https://phantom.app" target="_blank" rel="noopener noreferrer" className="text-white/60 underline">
+                        Phantom
+                      </a>
+                      {' '}to pay with Solana
+                    </p>
+                  )
+                )}
+              </div>
 
-                  {polling && !error && (
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 border border-white/20 border-t-white/60 rounded-full animate-spin" />
-                      <p className="text-white/40 text-xs" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                        verifying on-chain...
-                      </p>
-                    </div>
-                  )}
-
-                  <div className="flex gap-3">
-                    <button
-                      onClick={() => { setStep('send'); setError(''); setPolling(false); if (pollingRef.current) clearInterval(pollingRef.current) }}
-                      className="border border-white/10 hover:border-white/30 transition-all py-2.5 px-4 text-white/40 text-xs tracking-wider lowercase cursor-pointer"
-                      style={{ fontFamily: 'var(--font-geist-sans)' }}
-                    >
-                      back
-                    </button>
-                    <button
-                      onClick={submit}
-                      disabled={submitting}
-                      className="flex-1 border border-white/20 hover:border-white/50 transition-all py-2.5 text-white/70 text-xs tracking-[0.2em] lowercase cursor-pointer disabled:opacity-30"
-                      style={{ fontFamily: 'var(--font-geist-sans)' }}
-                    >
-                      {submitting ? 'verifying...' : 'verify & activate'}
-                    </button>
-                  </div>
-                </>
+              {error && (
+                <p className="text-red-400/70 text-xs" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  {error}
+                </p>
               )}
+
+              <button
+                onClick={handlePay}
+                disabled={(chain === 'base' && !evmWallet) || (chain === 'solana' && !hasSolanaWallet)}
+                className="w-full border border-white/20 hover:border-white/50 transition-all py-3 text-white/70 text-xs tracking-[0.2em] lowercase cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                style={{ fontFamily: 'var(--font-geist-sans)' }}
+              >
+                pay 20 USDC on {chain}
+              </button>
             </div>
           )}
         </div>
