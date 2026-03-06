@@ -414,9 +414,9 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
             </div>
           </Html>
 
-          {/* Main split labels (lucid agent, socials, [redacted]) */}
+          {/* Main split labels (lucid agent, socials, dev portal) */}
           {LEVEL1.nodes.map((node, i) => {
-            const isRedacted = node.label === '[redacted]'
+            const isDevPortal = node.id === 'devPortal'
             return (
               <Html
                 key={node.id}
@@ -431,13 +431,22 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
                     transition: 'opacity 0.8s cubic-bezier(0.16, 1, 0.3, 1)',
                   }}
                 >
-                  <span
-                    className={`orb-label font-light select-none whitespace-nowrap lowercase${isRedacted ? ' glitch-text' : ''}`}
-                    style={labelStyle}
-                    {...(isRedacted ? { 'data-text': node.label } : {})}
-                  >
-                    {node.label}
-                  </span>
+                  {isDevPortal ? (
+                    <a
+                      href="/app"
+                      className="orb-label font-light select-none whitespace-nowrap lowercase"
+                      style={{ ...labelStyle, textDecoration: 'none', cursor: 'pointer' }}
+                    >
+                      {node.label}
+                    </a>
+                  ) : (
+                    <span
+                      className="orb-label font-light select-none whitespace-nowrap lowercase"
+                      style={labelStyle}
+                    >
+                      {node.label}
+                    </span>
+                  )}
                 </div>
               </Html>
             )

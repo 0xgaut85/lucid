@@ -27,7 +27,7 @@ export const LEVEL1: OrbGroup = {
   nodes: [
     { id: 'lucidAgent', label: 'lucid agent', center: [-3.8, 2.5, 0], radius: 2.2, labelColor: 'white', labelPosition: 'above' },
     { id: 'socials', label: 'socials', center: [3.8, 2.5, 0], radius: 2.2, labelColor: 'white', labelPosition: 'above' },
-    { id: 'docs', label: '[redacted]', center: [0, -3.0, 0], radius: 2.2, labelColor: 'white', labelPosition: 'above' },
+    { id: 'devPortal', label: 'dev portal', center: [0, -3.0, 0], radius: 2.2, labelColor: 'white', labelPosition: 'above' },
   ],
   links: false,
   zoom: { position: [0, 0, 15], lookAt: [0, 0, 0] },
