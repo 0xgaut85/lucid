@@ -29,6 +29,17 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   title: "get Lucid",
   description: "An intelligence layer grounding autonomous agents in verified, real-time knowledge at scale.",
+  openGraph: {
+    title: "get Lucid",
+    description: "An intelligence layer grounding autonomous agents in verified, real-time knowledge at scale.",
+    siteName: "Lucid",
+    type: "website",
+  },
+  twitter: {
+    card: "summary",
+    title: "get Lucid",
+    description: "An intelligence layer grounding autonomous agents in verified, real-time knowledge at scale.",
+  },
 };
 
 export default function RootLayout({
