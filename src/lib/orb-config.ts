@@ -41,7 +41,7 @@ export const LEVEL2_SOCIALS: OrbGroup = {
   nodes: [
     { id: 'x', label: '@getlucid', center: [1.8, 3.6, 0], radius: 1.0, labelColor: 'white', labelPosition: 'above' },
     { id: 'github', label: 'github', center: [5.8, 3.6, 0], radius: 1.0, labelColor: 'white', labelPosition: 'above' },
-    { id: 'founder', label: '[redacted]', center: [3.8, 0.6, 0], radius: 1.0, labelColor: 'white', labelPosition: 'above' },
+    { id: 'docs', label: 'docs', center: [3.8, 0.6, 0], radius: 1.0, labelColor: 'white', labelPosition: 'above' },
   ],
   links: true,
   zoom: { position: [3.8, 2.2, 7], lookAt: [3.8, 2.2, 0] },

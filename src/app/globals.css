@@ -149,3 +149,248 @@ body {
     width: 100% !important;
   }
 }
+
+/* Docs prose styles */
+.prose-docs h1 {
+  font-size: 1.75rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.95);
+  letter-spacing: 0.02em;
+  margin-bottom: 0.5rem;
+}
+
+.prose-docs .lead {
+  font-size: 0.95rem;
+  color: rgba(255,255,255,0.45);
+  line-height: 1.7;
+  margin-bottom: 2.5rem;
+}
+
+.prose-docs h2 {
+  font-size: 1.15rem;
+  font-weight: 400;
+  color: rgba(255,255,255,0.85);
+  margin-top: 2.5rem;
+  margin-bottom: 0.75rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(255,255,255,0.06);
+}
+
+.prose-docs h2:first-of-type {
+  border-top: none;
+  padding-top: 0;
+}
+
+.prose-docs h3 {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  margin-top: 1.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.prose-docs h4 {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255,255,255,0.55);
+  margin-top: 1.25rem;
+  margin-bottom: 0.4rem;
+}
+
+.prose-docs p {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.prose-docs ul, .prose-docs ol {
+  font-size: 0.85rem;
+  color: rgba(255,255,255,0.55);
+  line-height: 1.8;
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.prose-docs li {
+  margin-bottom: 0.35rem;
+}
+
+.prose-docs strong {
+  color: rgba(255,255,255,0.8);
+  font-weight: 500;
+}
+
+.prose-docs code {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.8em;
+  background: rgba(255,255,255,0.06);
+  padding: 0.15em 0.4em;
+  border-radius: 3px;
+  color: rgba(255,255,255,0.7);
+}
+
+.prose-docs a {
+  color: rgba(255,255,255,0.7);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  text-decoration-color: rgba(255,255,255,0.2);
+  transition: all 0.2s;
+}
+
+.prose-docs a:hover {
+  color: rgba(255,255,255,0.95);
+  text-decoration-color: rgba(255,255,255,0.5);
+}
+
+.prose-docs hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  margin: 2rem 0;
+}
+
+.prose-docs .code-block {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 1rem 1.25rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+}
+
+.prose-docs .code-block pre {
+  font-family: var(--font-geist-mono), monospace;
+  font-size: 0.78rem;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.7;
+  margin: 0;
+  white-space: pre;
+}
+
+.prose-docs .info-box {
+  border-left: 2px solid rgba(255,255,255,0.15);
+  padding: 0.75rem 1.25rem;
+  margin: 1.5rem 0;
+  background: rgba(255,255,255,0.02);
+}
+
+.prose-docs .info-box p {
+  margin-bottom: 0.4rem;
+}
+
+.prose-docs .info-box p:last-child {
+  margin-bottom: 0;
+}
+
+.prose-docs .param-table {
+  border: 1px solid rgba(255,255,255,0.08);
+  margin: 1rem 0;
+}
+
+.prose-docs .param-row {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.6rem 1rem;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+  font-size: 0.8rem;
+}
+
+.prose-docs .param-row:last-child {
+  border-bottom: none;
+}
+
+.prose-docs .param-row code {
+  font-size: 0.78rem;
+  min-width: 80px;
+  flex-shrink: 0;
+}
+
+.prose-docs .param-type {
+  color: rgba(255,255,255,0.3);
+  font-size: 0.72rem;
+  min-width: 100px;
+  flex-shrink: 0;
+}
+
+.prose-docs .param-desc {
+  color: rgba(255,255,255,0.5);
+}
+
+.prose-docs .tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 0.5rem 0 1rem;
+}
+
+.prose-docs .tag-list span {
+  font-size: 0.7rem;
+  padding: 0.25rem 0.6rem;
+  border: 1px solid rgba(255,255,255,0.1);
+  color: rgba(255,255,255,0.5);
+  background: rgba(255,255,255,0.02);
+}
+
+.prose-docs .pricing-card {
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 2rem;
+  margin: 1.5rem 0;
+  text-align: center;
+}
+
+.prose-docs .pricing-amount {
+  font-size: 2rem;
+  font-weight: 300;
+  color: rgba(255,255,255,0.9);
+  margin-bottom: 0.25rem;
+}
+
+.prose-docs .pricing-amount span {
+  font-size: 0.9rem;
+  color: rgba(255,255,255,0.4);
+}
+
+.prose-docs .pricing-sub {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.35);
+  margin-bottom: 1.5rem;
+}
+
+.prose-docs .pricing-card ul {
+  list-style: none;
+  padding: 0;
+  text-align: left;
+  max-width: 300px;
+  margin: 0 auto 1.5rem;
+}
+
+.prose-docs .pricing-card li {
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.5);
+  padding: 0.3rem 0;
+  padding-left: 1.2rem;
+  position: relative;
+}
+
+.prose-docs .pricing-card li::before {
+  content: '✓';
+  position: absolute;
+  left: 0;
+  color: rgba(255,255,255,0.3);
+}
+
+.prose-docs .pricing-cta {
+  display: inline-block;
+  border: 1px solid rgba(255,255,255,0.2);
+  padding: 0.6rem 2rem;
+  font-size: 0.8rem;
+  color: rgba(255,255,255,0.7);
+  text-decoration: none;
+  letter-spacing: 0.1em;
+  transition: all 0.3s;
+}
+
+.prose-docs .pricing-cta:hover {
+  border-color: rgba(255,255,255,0.5);
+  color: rgba(255,255,255,0.95);
+}

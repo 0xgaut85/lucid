@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lucid — Twitter Banners</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #111;
+      font-family: 'Geist', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 60px;
+      padding: 60px 20px;
+    }
+
+    .banner {
+      width: 1920px;
+      height: 1080px;
+      position: relative;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .noise {
+      position: absolute;
+      inset: 0;
+      opacity: 0.05;
+      mix-blend-mode: overlay;
+      pointer-events: none;
+      z-index: 50;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+      background-size: 256px 256px;
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(ellipse at center, transparent 30%, rgba(0,0,0,0.65) 100%);
+      pointer-events: none;
+      z-index: 40;
+    }
+
+    .label {
+      font-family: 'Geist', sans-serif;
+      letter-spacing: 0.25em;
+      text-transform: lowercase;
+      font-weight: 300;
+    }
+
+    .label-mono {
+      font-family: 'Geist', monospace;
+      letter-spacing: 0.15em;
+      text-transform: lowercase;
+      font-weight: 400;
+    }
+
+    .logo-mark {
+      position: absolute;
+      bottom: 48px;
+      right: 80px;
+      z-index: 20;
+    }
+
+    .logo-mark img {
+      width: 52px;
+      height: 52px;
+      filter: invert(1);
+      opacity: 0.6;
+    }
+  </style>
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     BANNER 1 — Centered headline, soft top glow
+     ═══════════════════════════════════════════════ -->
+
+<div class="banner" id="banner-1">
+
+  <!-- atmospheric glow -->
+  <div style="position:absolute;width:1100px;height:700px;top:-200px;left:50%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,rgba(200,210,255,0.045),transparent 70%);z-index:1;"></div>
+
+  <!-- center content -->
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20;">
+    <div class="label" style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:48px;">the intelligence layer</div>
+    <div style="font-size:96px;font-weight:300;color:#fff;letter-spacing:-0.02em;line-height:1.05;text-align:center;">
+      grounding agents<br>in verified knowledge
+    </div>
+    <div style="margin-top:56px;width:40px;height:1px;background:rgba(255,255,255,0.2);"></div>
+    <div style="margin-top:28px;font-size:16px;font-weight:300;color:rgba(255,255,255,0.55);letter-spacing:0.18em;text-transform:lowercase;">
+      real-time &nbsp;·&nbsp; autonomous &nbsp;·&nbsp; at scale
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div style="position:absolute;bottom:64px;left:100px;z-index:20;">
+    <div class="label-mono" style="font-size:11px;color:rgba(255,255,255,0.35);">001</div>
+  </div>
+  <div class="logo-mark"><img src="public/logo.png" alt="lucid"></div>
+
+  <div class="vignette"></div>
+  <div class="noise"></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     BANNER 2 — Left-aligned statement, warm glow
+     ═══════════════════════════════════════════════ -->
+
+<div class="banner" id="banner-2">
+
+  <!-- atmospheric glow — shifted right -->
+  <div style="position:absolute;width:900px;height:900px;top:50%;right:-100px;transform:translateY(-50%);border-radius:50%;background:radial-gradient(circle,rgba(220,215,240,0.035),transparent 65%);z-index:1;"></div>
+
+  <!-- left content -->
+  <div style="position:absolute;top:50%;left:100px;transform:translateY(-50%);z-index:20;max-width:1100px;">
+    <div class="label" style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:48px;">autonomous intelligence</div>
+    <div style="font-size:104px;font-weight:300;color:#fff;letter-spacing:-0.02em;line-height:1.05;">
+      agents that think,<br>verify, then act.
+    </div>
+    <div style="margin-top:56px;width:40px;height:1px;background:rgba(255,255,255,0.2);"></div>
+    <div style="margin-top:28px;font-size:16px;font-weight:300;color:rgba(255,255,255,0.55);letter-spacing:0.18em;text-transform:lowercase;">
+      an intelligence layer for the agentic era
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div style="position:absolute;bottom:64px;left:100px;z-index:20;">
+    <div class="label-mono" style="font-size:11px;color:rgba(255,255,255,0.35);">002</div>
+  </div>
+  <div class="logo-mark"><img src="public/logo.png" alt="lucid"></div>
+
+  <div class="vignette"></div>
+  <div class="noise"></div>
+</div>
+
+
+<!-- ═══════════════════════════════════════════════
+     BANNER 3 — Metrics + tagline, bottom glow
+     ═══════════════════════════════════════════════ -->
+
+<div class="banner" id="banner-3">
+
+  <!-- atmospheric glow — bottom center -->
+  <div style="position:absolute;width:1200px;height:600px;bottom:-200px;left:50%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,rgba(200,215,255,0.04),transparent 65%);z-index:1;"></div>
+
+  <!-- center content -->
+  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20;">
+    <div style="font-size:88px;font-weight:300;color:#fff;letter-spacing:-0.02em;line-height:1.05;text-align:center;">
+      knowledge at the<br>speed of thought
+    </div>
+    <div style="margin-top:72px;display:flex;gap:120px;align-items:flex-start;">
+      <div style="text-align:center;">
+        <div style="font-size:44px;font-weight:300;color:rgba(255,255,255,0.95);letter-spacing:-0.01em;">150k+</div>
+        <div class="label" style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:12px;">sources verified</div>
+      </div>
+      <div style="width:1px;height:56px;background:rgba(255,255,255,0.12);margin-top:4px;"></div>
+      <div style="text-align:center;">
+        <div style="font-size:44px;font-weight:300;color:rgba(255,255,255,0.95);letter-spacing:-0.01em;">&lt;50ms</div>
+        <div class="label" style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:12px;">response latency</div>
+      </div>
+      <div style="width:1px;height:56px;background:rgba(255,255,255,0.12);margin-top:4px;"></div>
+      <div style="text-align:center;">
+        <div style="font-size:44px;font-weight:300;color:rgba(255,255,255,0.95);letter-spacing:-0.01em;">24/7</div>
+        <div class="label" style="font-size:12px;color:rgba(255,255,255,0.5);margin-top:12px;">always online</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- footer -->
+  <div style="position:absolute;bottom:64px;left:100px;z-index:20;">
+    <div class="label-mono" style="font-size:11px;color:rgba(255,255,255,0.35);">003</div>
+  </div>
+  <div class="logo-mark"><img src="public/logo.png" alt="lucid"></div>
+
+  <div class="vignette"></div>
+  <div class="noise"></div>
+</div>
+
+</body>
+</html>

@@ -343,7 +343,7 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
 
   const showLabels = !!portalRef
 
-  const subLabelLinks: Record<string, string> = { x: 'https://x.com/GetLucid', github: 'https://github.com/get-Lucid/Lucid' }
+  const subLabelLinks: Record<string, string> = { x: 'https://x.com/GetLucid', github: 'https://github.com/get-Lucid/Lucid', docs: '/docs' }
 
   return (
     <>
@@ -452,10 +452,9 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
             )
           })}
 
-          {/* Sub socials labels (@getlucid, [redacted], [redacted]) */}
+          {/* Sub socials labels */}
           {LEVEL2_SOCIALS.nodes.map((node, i) => {
             const href = subLabelLinks[node.id]
-            const isRedacted = node.label === '[redacted]'
             return (
               <Html
                 key={`sub-${node.id}`}
@@ -474,8 +473,7 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
                   {href ? (
                     <a
                       href={href}
-                      target="_blank"
-                      rel="noopener noreferrer"
+                      {...(href.startsWith('/') ? {} : { target: '_blank', rel: 'noopener noreferrer' })}
                       className="orb-label font-light select-none whitespace-nowrap lowercase"
                       style={{
                         ...labelStyle,
@@ -487,9 +485,8 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
                     </a>
                   ) : (
                     <span
-                      className={`orb-label font-light select-none whitespace-nowrap lowercase${isRedacted ? ' glitch-text' : ''}`}
+                      className="orb-label font-light select-none whitespace-nowrap lowercase"
                       style={labelStyle}
-                      {...(isRedacted ? { 'data-text': node.label } : {})}
                     >
                       {node.label}
                     </span>
