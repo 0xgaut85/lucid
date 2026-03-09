@@ -156,59 +156,78 @@ export default function AppPage() {
 
   if (!authenticated) {
     return (
-      <main className="min-h-screen bg-black flex flex-col items-center justify-center px-6 relative overflow-hidden">
+      <main className="min-h-screen bg-black flex flex-col relative overflow-hidden">
+        {/* background glow */}
         <div
-          className="absolute inset-0"
-          style={{
-            background: 'radial-gradient(circle at 50% 50%, rgba(255,255,255,0.04) 0%, transparent 60%)',
-          }}
+          className="absolute inset-0 pointer-events-none"
+          style={{ background: 'radial-gradient(ellipse at 50% 60%, rgba(255,255,255,0.05) 0%, transparent 65%)' }}
         />
 
-        <div className="relative z-10 flex flex-col items-center max-w-lg text-center">
-          <Image src="/logo.png" alt="Lucid" width={48} height={48} className="mb-8 opacity-80" />
-
-          <h1
-            className="text-white font-light tracking-[0.3em] lowercase text-2xl mb-4"
-            style={{ fontFamily: 'var(--font-geist-sans)' }}
-          >
-            dev portal
-          </h1>
-
-          <p
-            className="text-white/50 text-sm leading-relaxed mb-8 max-w-md"
-            style={{ fontFamily: 'var(--font-geist-sans)' }}
-          >
-            An intelligence layer grounding autonomous agents in verified, real-time knowledge at scale.
-          </p>
-
-          <div className="flex items-center gap-2 mb-10 px-4 py-2.5 border border-white/10 bg-white/[0.03]">
-            <span className="w-1.5 h-1.5 rounded-full bg-white/50 animate-pulse shrink-0" />
-            <p className="text-white/60 text-xs tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-              free 24h trial on signup &mdash; no payment required
-            </p>
-          </div>
-
-          <button
-            onClick={login}
-            className="group relative cursor-pointer bg-transparent border border-white/20 hover:border-white/50 transition-all duration-500 px-10 py-3 rounded-none"
-          >
-            <span
-              className="text-white font-light lowercase tracking-[0.25em] text-sm"
-              style={{ fontFamily: 'var(--font-geist-sans)' }}
-            >
-              sign in
-            </span>
-          </button>
-
-          <p className="text-white/30 text-xs mt-6 tracking-wider" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-            google &middot; email &middot; wallet
-          </p>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 z-20 flex items-center justify-between px-6 py-4 sm:px-10 sm:py-6">
-          <Link href="/" className="text-white/40 hover:text-white/70 transition-colors text-xs font-sans font-light tracking-wider">
+        {/* top bar */}
+        <div className="relative z-10 flex items-center justify-between px-8 py-6 sm:px-14 sm:py-8">
+          <Link href="/" className="text-white/35 hover:text-white/60 transition-colors text-xs tracking-[0.2em] lowercase" style={{ fontFamily: 'var(--font-geist-sans)' }}>
             &larr; home
           </Link>
+          <div className="flex items-center gap-2">
+            <Image src="/logo.png" alt="Lucid" width={22} height={22} className="opacity-50" />
+            <span className="text-white/35 text-xs tracking-[0.25em] lowercase" style={{ fontFamily: 'var(--font-geist-sans)' }}>lucid</span>
+          </div>
+        </div>
+
+        {/* main content */}
+        <div className="relative z-10 flex-1 flex flex-col items-center justify-center px-6 py-16">
+          <div className="w-full max-w-xl flex flex-col items-center text-center">
+
+            {/* headline */}
+            <h1
+              className="text-white font-light text-5xl sm:text-6xl mb-6 leading-tight"
+              style={{ fontFamily: 'var(--font-geist-sans)', letterSpacing: '-0.02em' }}
+            >
+              dev portal
+            </h1>
+
+            <p
+              className="text-white/45 text-lg font-light leading-relaxed mb-12 max-w-md"
+              style={{ fontFamily: 'var(--font-geist-sans)' }}
+            >
+              An intelligence layer grounding autonomous agents in verified, real-time knowledge at scale.
+            </p>
+
+            {/* trial badge */}
+            <div className="flex items-center gap-3 mb-12 px-6 py-3.5 border border-white/10 bg-white/[0.025] w-full max-w-sm justify-center">
+              <span className="w-2 h-2 rounded-full bg-white/55 animate-pulse shrink-0" />
+              <p className="text-white/65 text-sm tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                free 24h trial on signup, no payment required
+              </p>
+            </div>
+
+            {/* sign in button */}
+            <button
+              onClick={login}
+              className="w-full max-w-sm cursor-pointer bg-transparent border border-white/25 hover:border-white/60 hover:bg-white/[0.03] transition-all duration-300 py-5 rounded-none"
+            >
+              <span
+                className="text-white font-light lowercase tracking-[0.3em] text-base"
+                style={{ fontFamily: 'var(--font-geist-sans)' }}
+              >
+                sign in
+              </span>
+            </button>
+
+            <p className="text-white/25 text-xs mt-5 tracking-[0.2em]" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+              google &middot; email &middot; wallet
+            </p>
+          </div>
+        </div>
+
+        {/* bottom rule */}
+        <div className="relative z-10 border-t border-white/[0.06] px-8 py-5 sm:px-14 flex items-center justify-between">
+          <p className="text-white/20 text-[11px] tracking-[0.2em] lowercase" style={{ fontFamily: 'var(--font-geist-mono)' }}>
+            getlucid.tech
+          </p>
+          <p className="text-white/20 text-[11px] tracking-wider" style={{ fontFamily: 'var(--font-geist-mono)' }}>
+            20 USDC / mo after trial
+          </p>
         </div>
       </main>
     )
@@ -252,7 +271,7 @@ export default function AppPage() {
           </div>
         </div>
 
-        {/* Trial banner — shown only when on free trial */}
+        {/* Trial banner: shown only when on free trial */}
         {trialKey && !isSubscribed && (
           <div className="mb-8 border border-white/10 bg-white/[0.02] px-5 py-4 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
