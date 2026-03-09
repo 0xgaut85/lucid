@@ -412,19 +412,13 @@ export default function AppPage() {
                 {installTab === 'claude' ? (
                   <>
                     <div>
-                      <p className="text-white/40 text-xs mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>1. add the marketplace</p>
+                      <p className="text-white/40 text-xs mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>1. install the plugin</p>
                       <code className="block text-white/70 text-xs px-3 py-2 bg-white/5" style={{ fontFamily: 'var(--font-geist-mono)' }}>
-                        /plugin marketplace add &lt;org&gt;/lucid-plugin
+                        /plugin install https://github.com/get-Lucid/Lucid
                       </code>
                     </div>
                     <div>
-                      <p className="text-white/40 text-xs mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>2. install the plugin</p>
-                      <code className="block text-white/70 text-xs px-3 py-2 bg-white/5" style={{ fontFamily: 'var(--font-geist-mono)' }}>
-                        /plugin install lucid@&lt;org&gt;/lucid-plugin
-                      </code>
-                    </div>
-                    <div>
-                      <p className="text-white/40 text-xs mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>3. set your api key</p>
+                      <p className="text-white/40 text-xs mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>2. set your api key</p>
                       <code className="block text-white/70 text-xs px-3 py-2 bg-white/5" style={{ fontFamily: 'var(--font-geist-mono)' }}>
                         export LUCID_API_KEY=lk_xxxxxxxxxxxxxxxx
                       </code>
@@ -436,14 +430,14 @@ export default function AppPage() {
                       <p className="text-white/40 text-xs mb-3" style={{ fontFamily: 'var(--font-geist-sans)' }}>install skills individually</p>
                       <div className="space-y-2">
                         {[
-                          'real-time-docs',
-                          'latest-packages',
-                          'fact-grounding',
-                          'live-api-reference',
-                          'codebase-freshness',
+                          'lucid-docs',
+                          'lucid-packages',
+                          'lucid-grounding',
+                          'lucid-api',
+                          'lucid-freshness',
                         ].map(skill => (
                           <code key={skill} className="block text-white/70 text-xs px-3 py-2 bg-white/5" style={{ fontFamily: 'var(--font-geist-mono)' }}>
-                            /skills install @lucid/{skill}
+                            openclaw skills install {skill}
                           </code>
                         ))}
                       </div>

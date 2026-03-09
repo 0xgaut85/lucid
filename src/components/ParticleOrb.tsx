@@ -343,7 +343,7 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
 
   const showLabels = !!portalRef
 
-  const subLabelLinks: Record<string, string> = { x: 'https://x.com/GetLucid' }
+  const subLabelLinks: Record<string, string> = { x: 'https://x.com/GetLucid', github: 'https://github.com/get-Lucid/Lucid' }
 
   return (
     <>

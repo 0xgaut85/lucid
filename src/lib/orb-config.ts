@@ -40,7 +40,7 @@ export const LEVEL2_SOCIALS: OrbGroup = {
   id: 'socials-children',
   nodes: [
     { id: 'x', label: '@getlucid', center: [1.8, 3.6, 0], radius: 1.0, labelColor: 'white', labelPosition: 'above' },
-    { id: 'github', label: '[redacted]', center: [5.8, 3.6, 0], radius: 1.0, labelColor: 'white', labelPosition: 'above' },
+    { id: 'github', label: 'github', center: [5.8, 3.6, 0], radius: 1.0, labelColor: 'white', labelPosition: 'above' },
     { id: 'founder', label: '[redacted]', center: [3.8, 0.6, 0], radius: 1.0, labelColor: 'white', labelPosition: 'above' },
   ],
   links: true,
