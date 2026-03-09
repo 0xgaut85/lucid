@@ -583,20 +583,13 @@ export default function AppPage() {
                 ) : (
                   <>
                     <div>
-                      <p className="text-white/40 text-xs mb-3" style={{ fontFamily: 'var(--font-geist-sans)' }}>install skills individually</p>
-                      <div className="space-y-2">
-                        {[
-                          'lucid-docs',
-                          'lucid-packages',
-                          'lucid-grounding',
-                          'lucid-api',
-                          'lucid-freshness',
-                        ].map(skill => (
-                          <code key={skill} className="block text-white/70 text-xs px-3 py-2 bg-white/5" style={{ fontFamily: 'var(--font-geist-mono)' }}>
-                            openclaw skills install {skill}
-                          </code>
-                        ))}
-                      </div>
+                      <p className="text-white/40 text-xs mb-3" style={{ fontFamily: 'var(--font-geist-sans)' }}>install all skills from github</p>
+                      <code className="block text-white/70 text-xs px-3 py-2 bg-white/5" style={{ fontFamily: 'var(--font-geist-mono)' }}>
+                        openclaw skills install https://github.com/get-Lucid/Lucid
+                      </code>
+                      <p className="text-white/25 text-[10px] mt-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                        installs lucid-docs, lucid-packages, lucid-grounding, lucid-api and lucid-freshness
+                      </p>
                     </div>
                     <div>
                       <p className="text-white/40 text-xs mb-2" style={{ fontFamily: 'var(--font-geist-sans)' }}>set your api key</p>

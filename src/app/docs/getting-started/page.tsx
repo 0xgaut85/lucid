@@ -29,15 +29,14 @@ export default function GettingStartedPage() {
 
       <h3>OpenClaw Skills</h3>
       <p>
-        If you are using an OpenClaw-compatible agent, install skills individually:
+        If you are using an OpenClaw-compatible agent, install all skills from GitHub:
       </p>
       <div className="code-block">
-        <pre>{`openclaw skills install lucid-docs
-openclaw skills install lucid-packages
-openclaw skills install lucid-grounding
-openclaw skills install lucid-api
-openclaw skills install lucid-freshness`}</pre>
+        <pre>{`openclaw skills install https://github.com/get-Lucid/Lucid`}</pre>
       </div>
+      <p>
+        This installs all five skills: lucid-docs, lucid-packages, lucid-grounding, lucid-api and lucid-freshness.
+      </p>
 
       <h3>Manual Installation</h3>
       <p>
