@@ -679,10 +679,10 @@ function PaymentModal({
 
   const verifyAndActivate = useCallback(async (txHash: string, payChain: string) => {
     setStatus('verifying')
-    const token = await getAccessToken()
 
-    const verify = async () => {
+    const attemptVerify = async (): Promise<boolean> => {
       try {
+        const token = await getAccessToken()
         const res = await fetch('/api/subscribe', {
           method: 'POST',
           headers: {
@@ -691,36 +691,40 @@ function PaymentModal({
           },
           body: JSON.stringify({ txHash, chain: payChain }),
         })
-        if (res.ok) {
-          if (pollingRef.current) clearInterval(pollingRef.current)
-          setStatus('success')
-          setTimeout(onSuccess, 1500)
-          return true
-        }
+        if (res.ok) return true
+        // If "already used" it means a prior attempt succeeded — treat as success
+        const body = await res.json().catch(() => ({}))
+        if (body?.error === 'transaction already used') return true
       } catch { /* retry */ }
       return false
     }
 
-    const ok = await verify()
-    if (!ok) {
-      pollingRef.current = setInterval(async () => {
-        try {
-          const statusToken = await getAccessToken()
-          const res = await fetch('/api/subscribe/status', {
-            headers: { Authorization: `Bearer ${statusToken}` },
-          })
-          if (res.ok) {
-            const data = await res.json()
-            const sub = data.subscription
-            if (sub?.status === 'active' && sub?.expiresAt && new Date(sub.expiresAt) > new Date()) {
-              if (pollingRef.current) clearInterval(pollingRef.current)
-              setStatus('success')
-              setTimeout(onSuccess, 1500)
-            }
-          }
-        } catch { /* keep polling */ }
-      }, 5000)
+    // Initial attempt (tx may not be confirmed yet — that's fine, we keep polling)
+    const ok = await attemptVerify()
+    if (ok) {
+      if (pollingRef.current) clearInterval(pollingRef.current)
+      setStatus('success')
+      setTimeout(onSuccess, 1500)
+      return
     }
+
+    // Retry verification every 6s for up to 3 minutes
+    let attempts = 0
+    pollingRef.current = setInterval(async () => {
+      attempts++
+      if (attempts > 30) {
+        if (pollingRef.current) clearInterval(pollingRef.current)
+        setError('verification timed out — if payment went through, contact support')
+        setStatus('error')
+        return
+      }
+      const success = await attemptVerify()
+      if (success) {
+        if (pollingRef.current) clearInterval(pollingRef.current)
+        setStatus('success')
+        setTimeout(onSuccess, 1500)
+      }
+    }, 6000)
   }, [getAccessToken, onSuccess])
 
   const payWithBase = async () => {
@@ -766,6 +770,8 @@ function PaymentModal({
         }],
       })
 
+      // Give the network a moment before first verification attempt
+      await new Promise(r => setTimeout(r, 3000))
       await verifyAndActivate(txHash as string, 'base')
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message || 'transaction failed'
@@ -845,6 +851,14 @@ function PaymentModal({
       }).add(transferIx)
 
       const { signature } = await phantom.signAndSendTransaction(tx)
+
+      // Wait for on-chain confirmation before verifying
+      const { blockhash: confirmBlockhash, lastValidBlockHeight } = await connection.getLatestBlockhash()
+      await connection.confirmTransaction(
+        { signature, blockhash: confirmBlockhash, lastValidBlockHeight },
+        'confirmed'
+      )
+
       await verifyAndActivate(signature, 'solana')
     } catch (err: unknown) {
       const msg = (err as { message?: string })?.message || 'transaction failed'

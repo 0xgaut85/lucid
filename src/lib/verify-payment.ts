@@ -16,52 +16,48 @@ export async function verifySolanaPayment(txHash: string): Promise<boolean> {
   if (!USDC_RECEIVE_SOL) return false
 
   const connection = new Connection(SOLANA_RPC, 'confirmed')
-  const tx = await connection.getParsedTransaction(txHash, {
-    maxSupportedTransactionVersion: 0,
-  })
+
+  // Retry up to 5 times with backoff — tx may be very recently confirmed
+  let tx = null
+  for (let i = 0; i < 5; i++) {
+    tx = await connection.getParsedTransaction(txHash, {
+      maxSupportedTransactionVersion: 0,
+      commitment: 'confirmed',
+    })
+    if (tx) break
+    await new Promise(r => setTimeout(r, 2000 * (i + 1)))
+  }
 
   if (!tx || tx.meta?.err) return false
 
   const receiverPk = new PublicKey(USDC_RECEIVE_SOL)
 
   for (const ix of tx.transaction.message.instructions) {
-    if ('parsed' in ix && ix.program === 'spl-token') {
-      const info = ix.parsed?.info
-      if (!info) continue
+    if (!('parsed' in ix) || ix.program !== 'spl-token') continue
+    const info = ix.parsed?.info
+    if (!info) continue
 
-      if (
-        ix.parsed.type === 'transferChecked' &&
-        info.mint === USDC_MINT_SOL &&
-        info.destination
-      ) {
-        const destAccount = await connection.getParsedAccountInfo(
-          new PublicKey(info.destination)
-        )
-        const destData = destAccount?.value?.data
-        if (destData && 'parsed' in destData) {
-          const owner = destData.parsed?.info?.owner
-          if (owner === receiverPk.toBase58()) {
-            const amount = parseFloat(info.tokenAmount?.uiAmountString || '0')
-            if (amount >= REQUIRED_AMOUNT) return true
-          }
+    if (ix.parsed.type === 'transferChecked' && info.mint === USDC_MINT_SOL && info.destination) {
+      const destAccount = await connection.getParsedAccountInfo(new PublicKey(info.destination))
+      const destData = destAccount?.value?.data
+      if (destData && 'parsed' in destData) {
+        const owner = destData.parsed?.info?.owner
+        if (owner === receiverPk.toBase58()) {
+          const amount = parseFloat(info.tokenAmount?.uiAmountString || '0')
+          if (amount >= REQUIRED_AMOUNT) return true
         }
       }
+    }
 
-      if (
-        ix.parsed.type === 'transfer' &&
-        info.destination
-      ) {
-        const destAccount = await connection.getParsedAccountInfo(
-          new PublicKey(info.destination)
-        )
-        const destData = destAccount?.value?.data
-        if (destData && 'parsed' in destData) {
-          const owner = destData.parsed?.info?.owner
-          const mint = destData.parsed?.info?.mint
-          if (owner === receiverPk.toBase58() && mint === USDC_MINT_SOL) {
-            const amount = parseFloat(info.amount || '0') / 1e6
-            if (amount >= REQUIRED_AMOUNT) return true
-          }
+    if (ix.parsed.type === 'transfer' && info.destination) {
+      const destAccount = await connection.getParsedAccountInfo(new PublicKey(info.destination))
+      const destData = destAccount?.value?.data
+      if (destData && 'parsed' in destData) {
+        const owner = destData.parsed?.info?.owner
+        const mint = destData.parsed?.info?.mint
+        if (owner === receiverPk.toBase58() && mint === USDC_MINT_SOL) {
+          const amount = parseFloat(info.amount || '0') / 1e6
+          if (amount >= REQUIRED_AMOUNT) return true
         }
       }
     }
@@ -78,32 +74,33 @@ export async function verifyBasePayment(txHash: string): Promise<boolean> {
     transport: http(BASE_RPC),
   })
 
-  const receipt = await client.getTransactionReceipt({
-    hash: txHash as `0x${string}`,
-  })
+  // Retry up to 5 times — receipt may not be available yet
+  let receipt = null
+  for (let i = 0; i < 5; i++) {
+    try {
+      receipt = await client.getTransactionReceipt({ hash: txHash as `0x${string}` })
+      if (receipt) break
+    } catch {
+      // not yet indexed
+    }
+    await new Promise(r => setTimeout(r, 2000 * (i + 1)))
+  }
 
   if (!receipt || receipt.status !== 'success') return false
 
   const receiverLower = USDC_RECEIVE_BASE.toLowerCase()
+  const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
 
   for (const log of receipt.logs) {
     if (log.address.toLowerCase() !== USDC_BASE.toLowerCase()) continue
+    if (log.topics[0] !== transferTopic) continue
+    if (!log.topics[2]) continue
 
     try {
-      const decoded = (() => {
-        const transferTopic = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef'
-        if (log.topics[0] !== transferTopic) return null
-        if (!log.topics[2]) return null
-
-        const to = '0x' + log.topics[2].slice(26)
-        const value = BigInt(log.data)
-        return { to, value }
-      })()
-
-      if (!decoded) continue
-
-      if (decoded.to.toLowerCase() === receiverLower) {
-        const amount = parseFloat(formatUnits(decoded.value, 6))
+      const to = '0x' + log.topics[2].slice(26)
+      const value = BigInt(log.data)
+      if (to.toLowerCase() === receiverLower) {
+        const amount = parseFloat(formatUnits(value, 6))
         if (amount >= REQUIRED_AMOUNT) return true
       }
     } catch {
