@@ -18,6 +18,16 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ valid: false, error: 'invalid api key' }, { status: 401 })
   }
 
+  // Trial key: valid if not expired
+  if (key.isTrial) {
+    if (!key.expiresAt || new Date(key.expiresAt) < new Date()) {
+      return NextResponse.json({ valid: false, error: 'trial expired' }, { status: 403 })
+    }
+    await prisma.apiKey.update({ where: { id: key.id }, data: { lastUsed: new Date() } })
+    return NextResponse.json({ valid: true, userId: key.userId, trial: true, expiresAt: key.expiresAt })
+  }
+
+  // Paid key: valid if subscription is active
   const sub = key.user.subscription
   const hasActiveSub = sub?.status === 'active' &&
     sub?.expiresAt &&
@@ -27,10 +37,6 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ valid: false, error: 'subscription expired' }, { status: 403 })
   }
 
-  await prisma.apiKey.update({
-    where: { id: key.id },
-    data: { lastUsed: new Date() },
-  })
-
-  return NextResponse.json({ valid: true, userId: key.userId })
+  await prisma.apiKey.update({ where: { id: key.id }, data: { lastUsed: new Date() } })
+  return NextResponse.json({ valid: true, userId: key.userId, trial: false })
 }

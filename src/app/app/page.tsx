@@ -11,6 +11,8 @@ interface ApiKeyData {
   key: string
   name: string
   active: boolean
+  isTrial: boolean
+  expiresAt: string | null
   createdAt: string
   lastUsed: string | null
 }
@@ -132,6 +134,18 @@ export default function AppPage() {
     subscription?.expiresAt &&
     new Date(subscription.expiresAt) > new Date()
 
+  const trialKey = apiKeys.find(k => k.isTrial && k.expiresAt && new Date(k.expiresAt) > new Date())
+  const trialExpired = apiKeys.find(k => k.isTrial) && !trialKey
+
+  const getTrialRemaining = (expiresAt: string) => {
+    const ms = new Date(expiresAt).getTime() - Date.now()
+    if (ms <= 0) return 'expired'
+    const h = Math.floor(ms / 3600000)
+    const m = Math.floor((ms % 3600000) / 60000)
+    if (h > 0) return `${h}h ${m}m remaining`
+    return `${m}m remaining`
+  }
+
   if (!ready) {
     return (
       <main className="min-h-screen bg-black flex items-center justify-center">
@@ -161,11 +175,18 @@ export default function AppPage() {
           </h1>
 
           <p
-            className="text-white/50 text-sm leading-relaxed mb-12 max-w-md"
+            className="text-white/50 text-sm leading-relaxed mb-8 max-w-md"
             style={{ fontFamily: 'var(--font-geist-sans)' }}
           >
             An intelligence layer grounding autonomous agents in verified, real-time knowledge at scale.
           </p>
+
+          <div className="flex items-center gap-2 mb-10 px-4 py-2.5 border border-white/10 bg-white/[0.03]">
+            <span className="w-1.5 h-1.5 rounded-full bg-white/50 animate-pulse shrink-0" />
+            <p className="text-white/60 text-xs tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+              free 24h trial on signup &mdash; no payment required
+            </p>
+          </div>
 
           <button
             onClick={login}
@@ -231,6 +252,54 @@ export default function AppPage() {
           </div>
         </div>
 
+        {/* Trial banner — shown only when on free trial */}
+        {trialKey && !isSubscribed && (
+          <div className="mb-8 border border-white/10 bg-white/[0.02] px-5 py-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-white/60 animate-pulse shrink-0" />
+              <div>
+                <p className="text-white/80 text-xs font-light tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  free 24h trial active
+                </p>
+                <p className="text-white/35 text-[10px] mt-0.5" style={{ fontFamily: 'var(--font-geist-mono)' }}>
+                  {getTrialRemaining(trialKey.expiresAt!)} &middot; full access to all tools
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowPaymentModal(true)}
+              className="border border-white/20 hover:border-white/50 transition-all px-5 py-2 text-white/70 text-xs tracking-[0.15em] lowercase cursor-pointer shrink-0"
+              style={{ fontFamily: 'var(--font-geist-sans)' }}
+            >
+              subscribe to keep access
+            </button>
+          </div>
+        )}
+
+        {/* Trial expired banner */}
+        {trialExpired && !isSubscribed && (
+          <div className="mb-8 border border-white/15 bg-white/[0.02] px-5 py-4 flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="w-1.5 h-1.5 rounded-full bg-white/20 shrink-0" />
+              <div>
+                <p className="text-white/60 text-xs font-light tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  your 24h trial has ended
+                </p>
+                <p className="text-white/30 text-[10px] mt-0.5" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  subscribe to continue using Lucid
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => setShowPaymentModal(true)}
+              className="border border-white/20 hover:border-white/50 transition-all px-5 py-2 text-white/70 text-xs tracking-[0.15em] lowercase cursor-pointer shrink-0"
+              style={{ fontFamily: 'var(--font-geist-sans)' }}
+            >
+              subscribe
+            </button>
+          </div>
+        )}
+
         {/* Two-column grid */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Left column: Subscription + API Keys */}
@@ -242,9 +311,9 @@ export default function AppPage() {
                   subscription
                 </h2>
                 <div className="flex items-center gap-2">
-                  <span className={`w-1.5 h-1.5 rounded-full ${isSubscribed ? 'bg-green-400' : 'bg-white/20'}`} />
+                  <span className={`w-1.5 h-1.5 rounded-full ${isSubscribed ? 'bg-green-400' : trialKey ? 'bg-white/50 animate-pulse' : 'bg-white/20'}`} />
                   <span className="text-white/50 text-xs tracking-wider lowercase" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                    {isSubscribed ? 'active' : 'inactive'}
+                    {isSubscribed ? 'active' : trialKey ? 'trial' : 'inactive'}
                   </span>
                 </div>
               </div>
@@ -261,6 +330,22 @@ export default function AppPage() {
                     <p className="text-white/30 text-xs" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                       paid on {subscription!.chain}
                     </p>
+                  </div>
+                ) : trialKey ? (
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-white/50 text-xs mb-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>free trial</p>
+                      <p className="text-white/70 text-sm font-light" style={{ fontFamily: 'var(--font-geist-mono)' }}>
+                        {getTrialRemaining(trialKey.expiresAt!)}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => setShowPaymentModal(true)}
+                      className="border border-white/20 hover:border-white/50 transition-all px-5 py-2 text-white/70 text-xs tracking-[0.2em] lowercase cursor-pointer shrink-0"
+                      style={{ fontFamily: 'var(--font-geist-sans)' }}
+                    >
+                      upgrade
+                    </button>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between">
@@ -285,7 +370,7 @@ export default function AppPage() {
                 <h2 className="text-white/60 text-xs tracking-[0.2em] uppercase" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                   api keys
                 </h2>
-                {!showNewKeyInput && (
+                {!showNewKeyInput && isSubscribed && (
                   <button
                     onClick={() => setShowNewKeyInput(true)}
                     className="text-white/40 hover:text-white/60 transition-colors text-xs tracking-wider lowercase cursor-pointer"
@@ -337,14 +422,26 @@ export default function AppPage() {
               ) : (
                 <div className="space-y-2">
                   {apiKeys.map(key => (
-                    <div key={key.id} className="border border-white/10 p-4 flex items-center justify-between gap-4">
+                    <div key={key.id} className={`border p-4 flex items-center justify-between gap-4 ${key.isTrial ? 'border-white/15 bg-white/[0.015]' : 'border-white/10'}`}>
                       <div className="flex-1 min-w-0">
-                        <p className="text-white/60 text-xs mb-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                          {key.name}
-                        </p>
+                        <div className="flex items-center gap-2 mb-1">
+                          <p className="text-white/60 text-xs" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                            {key.name}
+                          </p>
+                          {key.isTrial && (
+                            <span className="text-[9px] px-1.5 py-0.5 border border-white/15 text-white/35 tracking-wider uppercase">
+                              free trial
+                            </span>
+                          )}
+                        </div>
                         <p className="text-white/80 text-xs truncate" style={{ fontFamily: 'var(--font-geist-mono)' }}>
                           {revealedKeys.has(key.id) ? key.key : maskKey(key.key)}
                         </p>
+                        {key.isTrial && key.expiresAt && (
+                          <p className="text-white/25 text-[10px] mt-1" style={{ fontFamily: 'var(--font-geist-mono)' }}>
+                            {getTrialRemaining(key.expiresAt)}
+                          </p>
+                        )}
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
                         <button
@@ -360,12 +457,14 @@ export default function AppPage() {
                         >
                           {copiedId === key.id ? 'copied' : 'copy'}
                         </button>
-                        <button
-                          onClick={() => revokeKey(key.id)}
-                          className="text-red-400/50 hover:text-red-400 transition-colors text-xs cursor-pointer px-2 py-1"
-                        >
-                          revoke
-                        </button>
+                        {!key.isTrial && (
+                          <button
+                            onClick={() => revokeKey(key.id)}
+                            className="text-red-400/50 hover:text-red-400 transition-colors text-xs cursor-pointer px-2 py-1"
+                          >
+                            revoke
+                          </button>
+                        )}
                       </div>
                     </div>
                   ))}

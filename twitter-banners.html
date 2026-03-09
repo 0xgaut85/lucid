@@ -69,17 +69,16 @@
     }
 
     .logo-mark img {
-      width: 52px;
-      height: 52px;
-      filter: invert(1);
-      opacity: 0.6;
+      width: 56px;
+      height: 56px;
+      opacity: 0.85;
     }
   </style>
 </head>
 <body>
 
 <!-- ═══════════════════════════════════════════════
-     BANNER 1 — Centered headline, soft top glow
+     BANNER 1 — Logo + border frame
      ═══════════════════════════════════════════════ -->
 
 <div class="banner" id="banner-1">
@@ -87,23 +86,44 @@
   <!-- atmospheric glow -->
   <div style="position:absolute;width:1100px;height:700px;top:-200px;left:50%;transform:translateX(-50%);border-radius:50%;background:radial-gradient(circle,rgba(200,210,255,0.045),transparent 70%);z-index:1;"></div>
 
-  <!-- center content -->
-  <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:20;">
-    <div class="label" style="font-size:14px;color:rgba(255,255,255,0.6);margin-bottom:48px;">the intelligence layer</div>
-    <div style="font-size:96px;font-weight:300;color:#fff;letter-spacing:-0.02em;line-height:1.05;text-align:center;">
-      grounding agents<br>in verified knowledge
-    </div>
-    <div style="margin-top:56px;width:40px;height:1px;background:rgba(255,255,255,0.2);"></div>
-    <div style="margin-top:28px;font-size:16px;font-weight:300;color:rgba(255,255,255,0.55);letter-spacing:0.18em;text-transform:lowercase;">
-      real-time &nbsp;·&nbsp; autonomous &nbsp;·&nbsp; at scale
+  <!-- dot-dash inner border frame -->
+  <svg style="position:absolute;inset:0;z-index:25;pointer-events:none;" width="1920" height="1080" viewBox="0 0 1920 1080">
+    <!-- thin connecting lines (main border) -->
+    <line x1="40" y1="40" x2="1880" y2="40" stroke="white" stroke-width="0.3"/>
+    <line x1="40" y1="1040" x2="1880" y2="1040" stroke="white" stroke-width="0.3"/>
+    <line x1="40" y1="40" x2="40" y2="1040" stroke="white" stroke-width="0.3"/>
+    <line x1="1880" y1="40" x2="1880" y2="1040" stroke="white" stroke-width="0.3"/>
+
+    <!-- thin connecting lines (logo box - 144x144) -->
+    <line x1="1736" y1="896" x2="1880" y2="896" stroke="white" stroke-width="0.3"/>
+    <line x1="1736" y1="896" x2="1736" y2="1040" stroke="white" stroke-width="0.3"/>
+
+    <!-- dense dot pattern — top -->
+    <line x1="40" y1="40" x2="1880" y2="40" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0 18"/>
+    <!-- dense dot pattern — bottom -->
+    <line x1="40" y1="1040" x2="1880" y2="1040" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0 18"/>
+    <!-- dense dot pattern — left -->
+    <line x1="40" y1="40" x2="40" y2="1040" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0 18"/>
+    <!-- dense dot pattern — right -->
+    <line x1="1880" y1="40" x2="1880" y2="1040" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0 18"/>
+
+    <!-- dense dot pattern — logo box top -->
+    <line x1="1736" y1="896" x2="1880" y2="896" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0 18"/>
+    <!-- dense dot pattern — logo box left -->
+    <line x1="1736" y1="896" x2="1736" y2="1040" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="0 18"/>
+  </svg>
+
+  <!-- top bar (inside the border frame) -->
+  <div style="position:absolute;top:40px;left:40px;right:40px;z-index:28;">
+    <div style="background:#fff;display:flex;align-items:center;justify-content:center;height:48px;">
+      <span style="font-family:'Geist',sans-serif;font-size:14px;font-weight:500;color:#000;letter-spacing:0.2em;text-transform:uppercase;">AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA</span>
     </div>
   </div>
 
-  <!-- footer -->
-  <div style="position:absolute;bottom:64px;left:100px;z-index:20;">
-    <div class="label-mono" style="font-size:11px;color:rgba(255,255,255,0.35);">001</div>
+  <!-- logo boxed at bottom-right corner -->
+  <div style="position:absolute;bottom:40px;right:40px;width:144px;height:144px;display:flex;align-items:center;justify-content:center;z-index:30;">
+    <img src="public/favicon.png" alt="lucid" style="width:72px;height:72px;mix-blend-mode:screen;">
   </div>
-  <div class="logo-mark"><img src="public/logo.png" alt="lucid"></div>
 
   <div class="vignette"></div>
   <div class="noise"></div>
@@ -135,7 +155,7 @@
   <div style="position:absolute;bottom:64px;left:100px;z-index:20;">
     <div class="label-mono" style="font-size:11px;color:rgba(255,255,255,0.35);">002</div>
   </div>
-  <div class="logo-mark"><img src="public/logo.png" alt="lucid"></div>
+  <div class="logo-mark"><img src="public/favicon.png" alt="lucid"></div>
 
   <div class="vignette"></div>
   <div class="noise"></div>
@@ -178,7 +198,7 @@
   <div style="position:absolute;bottom:64px;left:100px;z-index:20;">
     <div class="label-mono" style="font-size:11px;color:rgba(255,255,255,0.35);">003</div>
   </div>
-  <div class="logo-mark"><img src="public/logo.png" alt="lucid"></div>
+  <div class="logo-mark"><img src="public/favicon.png" alt="lucid"></div>
 
   <div class="vignette"></div>
   <div class="noise"></div>

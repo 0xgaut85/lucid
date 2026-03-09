@@ -24,6 +24,8 @@ model ApiKey {
   userId    String
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
   active    Boolean   @default(true)
+  isTrial   Boolean   @default(false)
+  expiresAt DateTime?
   createdAt DateTime  @default(now())
   lastUsed  DateTime?
 }
