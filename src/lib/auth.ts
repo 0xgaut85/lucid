@@ -19,9 +19,7 @@ export async function verifyPrivyToken(req: NextRequest): Promise<string | null>
   const token = authHeader.slice(7)
 
   try {
-    const verifiedClaims = await privy.utils().auth().verifyAccessToken({
-      access_token: token,
-    })
+    const verifiedClaims = await privy.verifyAuthToken(token)
     // #region agent log
     console.log('[DEBUG-8b79ab] verifyPrivyToken: verified', { userId: verifiedClaims.userId })
     // #endregion
