@@ -137,7 +137,14 @@ export default function AppPage() {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}` },
       })
-      if (res.ok) await fetchData()
+      if (res.ok) {
+        const data = await res.json()
+        await fetchData()
+        // Auto-reveal the newly created trial key
+        if (data.key?.id) {
+          setRevealedKeys(prev => new Set([...prev, data.key.id]))
+        }
+      }
     } finally {
       setClaimingTrial(false)
     }
@@ -420,7 +427,7 @@ export default function AppPage() {
                 <h2 className="text-white/60 text-xs tracking-[0.2em] uppercase" style={{ fontFamily: 'var(--font-geist-sans)' }}>
                   api keys
                 </h2>
-                {!showNewKeyInput && isSubscribed && (
+                {!showNewKeyInput && (isSubscribed || trialKey) && (
                   <button
                     onClick={() => setShowNewKeyInput(true)}
                     className="text-white/40 hover:text-white/60 transition-colors text-xs tracking-wider lowercase cursor-pointer"

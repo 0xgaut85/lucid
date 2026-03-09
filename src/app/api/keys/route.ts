@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
 
   const user = await prisma.user.findUnique({
     where: { privyId },
-    include: { subscription: true },
+    include: { subscription: true, apiKeys: { where: { active: true } } },
   })
 
   if (!user) {
@@ -39,8 +39,12 @@ export async function POST(req: NextRequest) {
     user.subscription?.expiresAt &&
     new Date(user.subscription.expiresAt) > new Date()
 
-  if (!hasActiveSub) {
-    return NextResponse.json({ error: 'active subscription required' }, { status: 403 })
+  const hasActiveTrial = user.apiKeys.some(
+    k => k.isTrial && k.expiresAt && new Date(k.expiresAt) > new Date()
+  )
+
+  if (!hasActiveSub && !hasActiveTrial) {
+    return NextResponse.json({ error: 'active subscription or trial required' }, { status: 403 })
   }
 
   const body = await req.json().catch(() => ({}))
