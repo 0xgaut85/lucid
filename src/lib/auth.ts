@@ -1,40 +1,34 @@
 import { NextRequest } from 'next/server'
+import { PrivyClient } from '@privy-io/node'
 
 const PRIVY_APP_ID = process.env.NEXT_PUBLIC_PRIVY_APP_ID || ''
 const PRIVY_APP_SECRET = process.env.PRIVY_APP_SECRET || ''
 
+const privy = new PrivyClient({
+  appId: PRIVY_APP_ID,
+  appSecret: PRIVY_APP_SECRET,
+})
+
 export async function verifyPrivyToken(req: NextRequest): Promise<string | null> {
   const authHeader = req.headers.get('authorization')
   // #region agent log
-  console.log('[DEBUG-8b79ab] verifyPrivyToken: start', { hasAuthHeader: !!authHeader, headerPrefix: authHeader?.slice(0, 20), appIdSet: !!PRIVY_APP_ID, appIdLen: PRIVY_APP_ID.length, secretSet: !!PRIVY_APP_SECRET, secretLen: PRIVY_APP_SECRET.length })
+  console.log('[DEBUG-8b79ab] verifyPrivyToken: start', { hasAuthHeader: !!authHeader, appIdSet: !!PRIVY_APP_ID, secretSet: !!PRIVY_APP_SECRET })
   // #endregion
   if (!authHeader?.startsWith('Bearer ')) return null
 
   const token = authHeader.slice(7)
 
   try {
-    const res = await fetch('https://auth.privy.io/api/v1/token/verify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'privy-app-id': PRIVY_APP_ID,
-        Authorization: `Basic ${Buffer.from(`${PRIVY_APP_ID}:${PRIVY_APP_SECRET}`).toString('base64')}`,
-      },
-      body: JSON.stringify({ token }),
+    const verifiedClaims = await privy.utils().auth().verifyAccessToken({
+      access_token: token,
     })
-
     // #region agent log
-    const resText = await res.clone().text()
-    console.log('[DEBUG-8b79ab] verifyPrivyToken: privy response', { status: res.status, ok: res.ok, body: resText.slice(0, 500) })
+    console.log('[DEBUG-8b79ab] verifyPrivyToken: verified', { userId: verifiedClaims.userId })
     // #endregion
-
-    if (!res.ok) return null
-
-    const data = JSON.parse(resText)
-    return data.userId || data.sub || null
+    return verifiedClaims.userId || null
   } catch (err: unknown) {
     // #region agent log
-    console.error('[DEBUG-8b79ab] verifyPrivyToken: THREW', { message: (err as Error)?.message })
+    console.error('[DEBUG-8b79ab] verifyPrivyToken: FAILED', { message: (err as Error)?.message })
     // #endregion
     return null
   }
