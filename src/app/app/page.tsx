@@ -36,6 +36,7 @@ export default function AppPage() {
   const [revealedKeys, setRevealedKeys] = useState<Set<string>>(new Set())
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [installTab, setInstallTab] = useState<'claude' | 'openclaw'>('claude')
+  const [claimingTrial, setClaimingTrial] = useState(false)
 
   const fetchData = useCallback(async () => {
     try {
@@ -128,6 +129,20 @@ export default function AppPage() {
     })
   }
 
+  const claimTrial = async () => {
+    setClaimingTrial(true)
+    try {
+      const token = await getAccessToken()
+      const res = await fetch('/api/trial/claim', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      if (res.ok) await fetchData()
+    } finally {
+      setClaimingTrial(false)
+    }
+  }
+
   const maskKey = (key: string) => key.slice(0, 6) + '\u2022'.repeat(20) + key.slice(-4)
 
   const isSubscribed = subscription?.status === 'active' &&
@@ -193,13 +208,10 @@ export default function AppPage() {
               An intelligence layer grounding autonomous agents in verified, real-time knowledge at scale.
             </p>
 
-            {/* trial badge */}
-            <div className="flex items-center gap-3 mb-12 px-6 py-3.5 border border-white/10 bg-white/[0.025] w-full max-w-sm justify-center">
-              <span className="w-2 h-2 rounded-full bg-white/55 animate-pulse shrink-0" />
-              <p className="text-white/65 text-sm tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                free 24h trial on signup, no payment required
-              </p>
-            </div>
+            {/* trial note */}
+            <p className="text-white/40 text-sm mb-12 tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+              sign in to claim your free 24h trial
+            </p>
 
             {/* sign in button */}
             <button
@@ -271,43 +283,62 @@ export default function AppPage() {
           </div>
         </div>
 
-        {/* Trial banner: shown only when on free trial */}
+        {/* No trial yet: claim CTA */}
+        {!loading && !isSubscribed && !trialKey && !trialExpired && (
+          <div className="mb-8 border border-white/10 bg-white/[0.02] px-6 py-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-white/80 text-sm font-light tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                claim your free 24h trial
+              </p>
+              <p className="text-white/35 text-xs mt-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                full access to all tools, no payment required
+              </p>
+            </div>
+            <button
+              onClick={claimTrial}
+              disabled={claimingTrial}
+              className="border border-white/25 hover:border-white/60 transition-all px-6 py-2.5 text-white/80 text-xs tracking-[0.2em] lowercase cursor-pointer shrink-0 disabled:opacity-40"
+              style={{ fontFamily: 'var(--font-geist-sans)' }}
+            >
+              {claimingTrial ? '...' : 'claim free trial'}
+            </button>
+          </div>
+        )}
+
+        {/* Trial active banner */}
         {trialKey && !isSubscribed && (
-          <div className="mb-8 border border-white/10 bg-white/[0.02] px-5 py-4 flex items-center justify-between gap-4">
+          <div className="mb-8 border border-white/10 bg-white/[0.02] px-6 py-5 flex items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="w-1.5 h-1.5 rounded-full bg-white/60 animate-pulse shrink-0" />
               <div>
-                <p className="text-white/80 text-xs font-light tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                  free 24h trial active
+                <p className="text-white/80 text-sm font-light tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                  trial active
                 </p>
-                <p className="text-white/35 text-[10px] mt-0.5" style={{ fontFamily: 'var(--font-geist-mono)' }}>
-                  {getTrialRemaining(trialKey.expiresAt!)} &middot; full access to all tools
+                <p className="text-white/35 text-xs mt-0.5" style={{ fontFamily: 'var(--font-geist-mono)' }}>
+                  {getTrialRemaining(trialKey.expiresAt!)} &middot; full access
                 </p>
               </div>
             </div>
             <button
               onClick={() => setShowPaymentModal(true)}
-              className="border border-white/20 hover:border-white/50 transition-all px-5 py-2 text-white/70 text-xs tracking-[0.15em] lowercase cursor-pointer shrink-0"
+              className="border border-white/20 hover:border-white/50 transition-all px-5 py-2 text-white/60 text-xs tracking-[0.15em] lowercase cursor-pointer shrink-0"
               style={{ fontFamily: 'var(--font-geist-sans)' }}
             >
-              subscribe to keep access
+              subscribe
             </button>
           </div>
         )}
 
         {/* Trial expired banner */}
         {trialExpired && !isSubscribed && (
-          <div className="mb-8 border border-white/15 bg-white/[0.02] px-5 py-4 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-              <span className="w-1.5 h-1.5 rounded-full bg-white/20 shrink-0" />
-              <div>
-                <p className="text-white/60 text-xs font-light tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                  your 24h trial has ended
-                </p>
-                <p className="text-white/30 text-[10px] mt-0.5" style={{ fontFamily: 'var(--font-geist-sans)' }}>
-                  subscribe to continue using Lucid
-                </p>
-              </div>
+          <div className="mb-8 border border-white/10 bg-white/[0.02] px-6 py-5 flex items-center justify-between gap-4">
+            <div>
+              <p className="text-white/60 text-sm font-light tracking-wide" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                your 24h trial has ended
+              </p>
+              <p className="text-white/30 text-xs mt-1" style={{ fontFamily: 'var(--font-geist-sans)' }}>
+                subscribe to continue using Lucid
+              </p>
             </div>
             <button
               onClick={() => setShowPaymentModal(true)}
