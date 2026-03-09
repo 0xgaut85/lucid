@@ -18,29 +18,32 @@ export async function POST(req: NextRequest) {
   const { txHash, chain } = body
 
   if (!txHash || !chain || !['solana', 'base'].includes(chain)) {
-    return NextResponse.json({ error: 'invalid request' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid request', detail: 'txHash and chain (solana|base) required' }, { status: 400 })
   }
 
-  const existingSub = await prisma.subscription.findFirst({
-    where: { txHash },
-  })
+  const existingSub = await prisma.subscription.findFirst({ where: { txHash } })
   if (existingSub) {
+    if (existingSub.userId === user.id) {
+      return NextResponse.json({ success: true, expiresAt: existingSub.expiresAt, alreadyApplied: true })
+    }
     return NextResponse.json({ error: 'transaction already used' }, { status: 400 })
   }
 
   let verified = false
+  let verifyError: string | null = null
   try {
     if (chain === 'solana') {
       verified = await verifySolanaPayment(txHash)
     } else {
       verified = await verifyBasePayment(txHash)
     }
-  } catch {
-    return NextResponse.json({ error: 'verification failed' }, { status: 500 })
+  } catch (err: unknown) {
+    verifyError = (err as Error)?.message || 'unknown error'
+    return NextResponse.json({ error: 'verification failed', detail: verifyError }, { status: 500 })
   }
 
   if (!verified) {
-    return NextResponse.json({ error: 'payment not verified' }, { status: 400 })
+    return NextResponse.json({ error: 'payment not verified', detail: `${chain} tx ${txHash} did not match expected USDC transfer of 20+ to configured address` }, { status: 400 })
   }
 
   const expiresAt = new Date()
@@ -48,19 +51,8 @@ export async function POST(req: NextRequest) {
 
   await prisma.subscription.upsert({
     where: { userId: user.id },
-    create: {
-      userId: user.id,
-      status: 'active',
-      txHash,
-      chain,
-      expiresAt,
-    },
-    update: {
-      status: 'active',
-      txHash,
-      chain,
-      expiresAt,
-    },
+    create: { userId: user.id, status: 'active', txHash, chain, expiresAt },
+    update: { status: 'active', txHash, chain, expiresAt },
   })
 
   return NextResponse.json({ success: true, expiresAt })
