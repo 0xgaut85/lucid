@@ -13,12 +13,15 @@ async function authenticateApiKey(req: NextRequest) {
 
   if (!key || !key.active) return null
 
-  const sub = key.user.subscription
-  const hasActiveSub = sub?.status === 'active' &&
-    sub?.expiresAt &&
-    new Date(sub.expiresAt) > new Date()
-
-  if (!hasActiveSub) return null
+  if (key.isTrial) {
+    if (!key.expiresAt || new Date(key.expiresAt) < new Date()) return null
+  } else {
+    const sub = key.user.subscription
+    const hasActiveSub = sub?.status === 'active' &&
+      sub?.expiresAt &&
+      new Date(sub.expiresAt) > new Date()
+    if (!hasActiveSub) return null
+  }
 
   await prisma.apiKey.update({
     where: { id: key.id },
@@ -28,20 +31,12 @@ async function authenticateApiKey(req: NextRequest) {
   return key.userId
 }
 
-export async function POST(req: NextRequest) {
+async function handleSearch(req: NextRequest, query: string, type: string) {
   const userId = await authenticateApiKey(req)
   if (!userId) {
     return NextResponse.json({ error: 'unauthorized or subscription expired' }, { status: 401 })
   }
 
-  const body = await req.json()
-  const { query, type } = body
-
-  if (!query || typeof query !== 'string') {
-    return NextResponse.json({ error: 'missing query' }, { status: 400 })
-  }
-
-  // type can be: 'docs', 'package', 'fact', 'api_ref'
   const searchType = type || 'docs'
 
   try {
@@ -50,6 +45,22 @@ export async function POST(req: NextRequest) {
   } catch {
     return NextResponse.json({ error: 'search failed' }, { status: 500 })
   }
+}
+
+export async function GET(req: NextRequest) {
+  const q = req.nextUrl.searchParams.get('q')
+  const type = req.nextUrl.searchParams.get('type') || 'docs'
+  if (!q) return NextResponse.json({ error: 'missing query param q' }, { status: 400 })
+  return handleSearch(req, q, type)
+}
+
+export async function POST(req: NextRequest) {
+  const body = await req.json()
+  const { query, type } = body
+  if (!query || typeof query !== 'string') {
+    return NextResponse.json({ error: 'missing query' }, { status: 400 })
+  }
+  return handleSearch(req, query, type || 'docs')
 }
 
 async function performSearch(query: string, type: string) {
