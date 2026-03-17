@@ -517,7 +517,7 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
             />
           </Html>
 
-          {/* "coming soon" above agent figure — x offset matches figure's visual center of mass */}
+          {/* "Portal" above agent figure — links to Lucid Agent X account */}
           <Html
             position={[LEVEL1.nodes[0].center[0] + 0.44, LEVEL1.nodes[0].center[1] + 2.1, 0]}
             center
@@ -533,12 +533,14 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
                 justifyContent: 'center',
               }}
             >
-              <button
-                onClick={onSignupOpen}
+              <a
+                href="https://x.com/Lucid_Agent"
+                target="_blank"
+                rel="noopener noreferrer"
                 onMouseEnter={() => { agentBtnHovered.current = true }}
                 onMouseLeave={() => { agentBtnHovered.current = false }}
-                className="coming-soon-btn group relative cursor-pointer bg-transparent border-none outline-none"
-                style={{ padding: '8px 16px', fontFamily: 'var(--font-geist-sans)' }}
+                className="coming-soon-btn group relative cursor-pointer bg-transparent border-none outline-none no-underline"
+                style={{ padding: '8px 16px', fontFamily: 'var(--font-geist-sans)', textDecoration: 'none' }}
               >
                 <span
                   className="coming-soon-text block text-white font-light lowercase select-none whitespace-nowrap"
@@ -549,7 +551,7 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
                     letterSpacing: isMobile ? '0.15em' : '0.3em',
                   }}
                 >
-                  coming soon
+                  portal
                 </span>
                 <span
                   className="coming-soon-underline block mx-auto mt-2"
@@ -561,7 +563,7 @@ export default function ParticleOrb({ labelPortal, onSignupOpen, isMobile, touch
                     opacity: 0.5,
                   }}
                 />
-              </button>
+              </a>
             </div>
           </Html>
         </>
